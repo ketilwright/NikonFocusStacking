@@ -46,7 +46,7 @@ MainMenuHandler::MainMenuHandler(MessagePump *_pump)
     IMessageHandler(_pump)
 {
     menu[0] = "Setup";
-	menu[1] = "Model";
+	menu[1] = "Test";
     menu[2] = "RunStack";
 };
 MainMenuHandler::~MainMenuHandler()
@@ -106,7 +106,6 @@ extern bool g_usbOK;
 void MainMenuHandler::show()
 {
 	if(!g_usbOK) return;
-    //IMessageHandler::show();
 	g_print->clear();
 	g_print->setCursor(SetupMenuPosCol, SetupMenuPosRow);
 	g_print->print(menu[0]);

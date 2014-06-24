@@ -21,9 +21,21 @@
 #pragma once
 
 // #include for whatever LCD hardware implementation is used.
-// Change g_print to point to your implementation.
-// Currently using i2c, 16x2
+// Currently using i2c, 16x2 adafruit lcd shield (which also has some buttons)
 #include <Wire.h>
 #include "Adafruit_MCP23017.h"
 #include "Adafruit_RGBLCDShield.h"
-extern Adafruit_RGBLCDShield *g_print;
+class LCDImpl : public Adafruit_RGBLCDShield
+{
+	uint8_t m_col, m_row;
+public:
+	void setCursor(uint8_t col, uint8_t row)
+	{
+		m_col = col;
+		m_row = row;
+		Adafruit_RGBLCDShield::setCursor(m_col, m_row);
+	}
+	uint8_t getCaretCol() const { return m_col; }
+	uint8_t getCaretRow() const { return m_row; }
+};
+extern LCDImpl *g_print;

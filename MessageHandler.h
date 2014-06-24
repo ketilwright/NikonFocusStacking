@@ -19,7 +19,7 @@
  */
 
 #pragma once
-
+#include "LcdImpl.h"
 #include <stdint.h>
 // Globally unique message types. This should
 // tell us what 'happened', not where the message
@@ -93,7 +93,7 @@ protected:
     const char *menu[5];
     // The caret is displayed as a > in the first display
     // column beneath a menu item
-    unsigned char m_caretCol, m_caretRow;
+    //unsigned char m_caretCol, m_caretRow;
 	void printMenuItem(uint8_t col, uint8_t row, uint8_t item);
 public:
     // Base class ctor just initializes OK on bottom line of menu[].
@@ -113,13 +113,13 @@ public:
     // Hides or shows the caret
     void showCaret(bool);
     // Returns the current col location.
-    unsigned char getCaretCol() const { return m_caretCol;}
+    unsigned char getCaretCol() const { return g_print->getCaretCol();}
     // Moves the caret row location.
-    void setCaretCol(unsigned char col) { m_caretCol = col;}
+    void setCaretCol(unsigned char col) { g_print->setCursor(col, g_print->getCaretRow());}
 	// returns the current caret row location		
-	unsigned char getCaretRow() const { return m_caretRow; }		
+	unsigned char getCaretRow() const { return g_print->getCaretRow(); }		
 	// moves the caret row location
-	void setCaretRow(unsigned char row) { m_caretRow = row; }
+	void setCaretRow(unsigned char row) { g_print->setCursor(g_print->getCaretCol(), row); }
 };
 
 

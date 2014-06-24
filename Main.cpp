@@ -42,6 +42,7 @@
 #include "ManualHandler.h"
 #include "RunFocusStackHandler.h"
 #include "Button.h"
+#include "LcdImpl.h"
 
 
 // g_pump dispatches MSG from Button objects to the current IMessageHandler
@@ -85,10 +86,10 @@ bool g_usbOK = true;
 // this is Analog 4 and 5 so you can't use those for analogRead() anymore
 // However, you can connect other I2C sensors to the I2C bus and share
 // the I2C bus.
-Adafruit_RGBLCDShield lcd = Adafruit_RGBLCDShield();
-Adafruit_RGBLCDShield *g_print = &lcd;
+// Modify LCDImpl.h for whateved LCD implementation is used.
+LCDImpl lcd = LCDImpl();
+LCDImpl *g_print = &lcd;
 ReadAdaFruitLcdButtonState buttonStateReader (g_print);
-
 // Buttons also implemented using the Adafruit LCD shield kit.
 Button buttonLeft(&buttonStateReader, BUTTON_LEFT, eLeft, HIGH);
 Button buttonRight(&buttonStateReader, BUTTON_RIGHT, eRight, HIGH);

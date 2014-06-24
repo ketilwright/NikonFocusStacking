@@ -245,10 +245,11 @@ void SetupHandler::updateDriveAmountUI(int change)
 		val /= 10;
 		++digits;
 	}
+	uint8_t tempCol = getCaretCol();
     g_print->setCursor(AmountFieldStartCol, 1);
 	for(unsigned char z = 0; z < 4 - digits; z++) g_print->print(F("0"));
     g_print->print(m_driveAmount);
-	g_print->setCursor(getCaretCol(), 1);
+	g_print->setCursor(tempCol, 1);
 }
 void SetupHandler::updateFramesUI(int change)
 {
@@ -264,11 +265,11 @@ void SetupHandler::updateFramesUI(int change)
 		val /= 10;
 		++digits;
 	}
+	uint8_t tempCol = getCaretCol();
 	g_print->setCursor(FrameFieldStart, 1);
     for(unsigned char z = 0; z < 3 - digits; z++) g_print->print(F("0"));
-  //  g_print->setCursor(FrameFieldStart + 3 - digits, 1);
     g_print->print(m_numFrames);
-	g_print->setCursor(getCaretCol(), 1);
+	g_print->setCursor(tempCol, 1);
 }
 
 void SetupHandler::updateFrameDelayUI(int change)
@@ -285,18 +286,20 @@ void SetupHandler::updateFrameDelayUI(int change)
 		val /= 10;
 		++digits;
 	}
+	uint8_t tempCol = getCaretCol();
     g_print->setCursor(DelayFieldStart, 1);
 	for(unsigned char z = 0; z < 3 - digits; z++) g_print->print(F("0"));
     if(0 != m_frameDelaySeconds) g_print->print(m_frameDelaySeconds);
-	g_print->setCursor(getCaretCol(), 1);
+	g_print->setCursor(tempCol, 1);
 }
 
 void SetupHandler::updateRestoreFocusUI(int change)
 {
+	uint8_t tempCol = getCaretCol();
 	g_print->setCursor(RestoreFocusFieldStart, 1);
 	g_print->print(F("   "));		
 	g_print->setCursor(RestoreFocusFieldStart, 1);
 	if(0 != change) m_restoreFocus = !m_restoreFocus;
 	g_print->print( m_restoreFocus ? F("Yes") : F("No"));
-	g_print->setCursor(getCaretCol(), 1);
+	g_print->setCursor(tempCol, 1);
 }

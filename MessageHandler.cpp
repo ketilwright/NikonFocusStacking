@@ -25,12 +25,9 @@
 // Base class ctor just initializes OK on bottom line of menu[].
 IMessageHandler::IMessageHandler(MessagePump* _pump)
     :
-    m_pump(_pump),
-    m_caretCol(0),
-	m_caretRow(0)
+    m_pump(_pump)
 {
-    //for(unsigned int line = 0; line < sizeof(menu) / sizeof(menu[0]); line++) menu[line] = NULL;
-	memset(menu, 0, sizeof(menu)); // 33076
+	memset(menu, 0, sizeof(menu)); 
 }
 
 void IMessageHandler::printMenuItem(uint8_t col, uint8_t row, uint8_t item)
@@ -64,15 +61,12 @@ void IMessageHandler::show()
 		g_print->setCursor(8, 1);
 		g_print->print(menu[2]);
 	}
-	m_caretCol = 0;
-    
 }
 
 // Draws or hides the caret.
 
 void IMessageHandler::showCaret(bool show)
 {
-	g_print->setCursor(m_caretCol, m_caretRow);
 	if(show) g_print->cursor();
 	else g_print->noCursor();
 }
@@ -81,8 +75,7 @@ void IMessageHandler::showCaret(bool show)
 void IMessageHandler::moveCaret(uint8_t col, uint8_t row)
 {
 	showCaret(false);
-	m_caretCol  = col;	
-	m_caretRow = row;
+	g_print->setCursor(col, row);
 	showCaret(true);
 }
 
