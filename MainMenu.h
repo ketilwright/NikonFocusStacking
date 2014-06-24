@@ -27,6 +27,7 @@
 // off a focus stack operation.
 class MainMenuHandler : public IMessageHandler
 {
+	void advanceCaret(uint8_t dir); // -1 = left, 1 right. All other values ignored
 public:
     MainMenuHandler(MessagePump *_pump);
     ~MainMenuHandler();

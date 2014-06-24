@@ -39,6 +39,7 @@
 #include "MessageHandler.h"
 #include "MainMenu.h"
 #include "SetupHandler.h"
+#include "ManualHandler.h"
 #include "RunFocusStackHandler.h"
 #include "Button.h"
 
@@ -50,11 +51,14 @@ MessagePump		g_pump(NULL);
 MainMenuHandler	g_main(&g_pump);
 // Handler to setup focus stack parameters
 SetupHandler	g_setup(&g_pump, 250, 10);
+// Handler to manually view the manual focus amount
+ManualHandler   g_manual(&g_pump);
 // Handler for focus stack execution
 RunFocusStackHandler g_runStack(&g_pump);
 // Global pointers for other modules
 MainMenuHandler         *g_pMain     = &g_main;
 SetupHandler            *g_pSetup	 = &g_setup;
+ManualHandler			*g_pManual	 = &g_manual;
 RunFocusStackHandler    *g_pRunStack = &g_runStack;
 MessagePump             *g_pPump     = &g_pump;
 

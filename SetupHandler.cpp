@@ -221,10 +221,10 @@ MsgResp SetupHandler::processMessage(Msg& msg)
 void SetupHandler::show()
 {
 	g_print->clear();
-	printMenuItem(AmountFieldStart, 0);
-	printMenuItem(FrameFieldStart, 1);
-	printMenuItem(DelayFieldStart, 2);
-	printMenuItem(RestoreFocusFieldStart, 3);
+	printMenuItem(AmountFieldStart, 0/*row*/, 0);
+	printMenuItem(FrameFieldStart, 0/*row*/,1);
+	printMenuItem(DelayFieldStart, 0/*row*/,2);
+	printMenuItem(RestoreFocusFieldStart, 0/*row*/,3);
     updateDriveAmountUI(0); // 0: don't change, just show the current value
     updateFramesUI(0);      // 0: don't change, just show the current value
 	updateFrameDelayUI(0);  // 0: don't change, just show the current value

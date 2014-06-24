@@ -94,7 +94,7 @@ protected:
     // The caret is displayed as a > in the first display
     // column beneath a menu item
     unsigned char m_caretCol, m_caretRow;
-	void printMenuItem(uint8_t col, uint8_t item);
+	void printMenuItem(uint8_t col, uint8_t row, uint8_t item);
 public:
     // Base class ctor just initializes OK on bottom line of menu[].
     IMessageHandler(MessagePump* _pump);
@@ -116,8 +116,10 @@ public:
     unsigned char getCaretCol() const { return m_caretCol;}
     // Moves the caret row location.
     void setCaretCol(unsigned char col) { m_caretCol = col;}
-		
-		
+	// returns the current caret row location		
+	unsigned char getCaretRow() const { return m_caretRow; }		
+	// moves the caret row location
+	void setCaretRow(unsigned char row) { m_caretRow = row; }
 };
 
 

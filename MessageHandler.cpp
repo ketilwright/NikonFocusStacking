@@ -33,9 +33,9 @@ IMessageHandler::IMessageHandler(MessagePump* _pump)
 	memset(menu, 0, sizeof(menu)); // 33076
 }
 
-void IMessageHandler::printMenuItem(uint8_t col, uint8_t item)
+void IMessageHandler::printMenuItem(uint8_t col, uint8_t row, uint8_t item)
 {
-	g_print->setCursor(col, 0);
+	g_print->setCursor(col, row);
 	g_print->print(menu[item]);
 }
 // Draws the menu text, indenting all lines but
