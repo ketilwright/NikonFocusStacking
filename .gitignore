@@ -1,0 +1,15 @@
+# atmel studio project & solution files
+*.atsln
+*.cppproj
+*.atsuo
+# atmel studio build & deploy scrips
+/Scripts
+# build folders
+/Debug
+/Release
+/DebugMega2560
+/ReleaseMega2560
+# libraries available elsewhere
+/USB_Host_Shield_2.0
+/PTP_2.0
+/Adafruit-RGB-LCD-Shield-Library
