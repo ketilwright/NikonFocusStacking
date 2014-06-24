@@ -26,6 +26,7 @@
 class ManualHandler : public IMessageHandler
 {
 	void advanceCaret(uint8_t dir);
+	void focus(uint8_t dir);
 public:
 	ManualHandler(MessagePump *_pump);
     MsgResp processMessage(Msg& msg);

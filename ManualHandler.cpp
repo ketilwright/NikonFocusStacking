@@ -66,37 +66,13 @@ MsgResp ManualHandler::processMessage(Msg& msg)
 		case eDown:
 		{
 			// advance focus backward
-			if(PTP_RC_OK == nk3.enableLiveView(true))
-			{
-				if(PTP_RC_OK == nk3.waitForReady(1000))
-				{
-					if(PTP_RC_OK == nk3.moveFocus(1, g_pSetup->getDriveAmount()))
-					{
-						if(PTP_RC_OK == nk3.waitForReady(1000))
-						{
-							nk3.enableLiveView(false);
-						}
-					}
-				}
-			}
+			focus(1);
 			break;
 		}
 		case eUp:
 		{
 			// advance focus forward
-			if(PTP_RC_OK == nk3.enableLiveView(true))
-			{
-				if(PTP_RC_OK == nk3.waitForReady(1000))
-				{
-					if(PTP_RC_OK == nk3.moveFocus(2, g_pSetup->getDriveAmount()))
-					{
-						if(PTP_RC_OK == nk3.waitForReady(1000))
-						{
-							nk3.enableLiveView(false);
-						}
-					}
-				}
-			}
+			focus(2);
 			break; 
 		}
 		case eSelect:
@@ -177,4 +153,20 @@ void ManualHandler::show()
 	moveCaret(MarkStartCol, MarkStartRow);
 	showCaret(true);
 	
+}
+void ManualHandler::focus(uint8_t dir)
+{
+	if(PTP_RC_OK == nk3.enableLiveView(true))
+	{
+		if(PTP_RC_OK == nk3.waitForReady(1000))
+		{
+			if(PTP_RC_OK == nk3.moveFocus(dir, g_pSetup->getDriveAmount()))
+			{
+				if(PTP_RC_OK == nk3.waitForReady(1000))
+				{
+					nk3.enableLiveView(false);
+				}
+			}
+		}
+	}
 }
