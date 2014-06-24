@@ -49,6 +49,7 @@ class SetupHandler : public IMessageHandler
     ~SetupHandler();
     MsgResp processMessage(Msg& msg);
     virtual void show();
+	friend class ManualHandler; // allow access to updateDriveAmountUI
 };
 
 

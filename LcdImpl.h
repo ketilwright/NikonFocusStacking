@@ -22,7 +22,7 @@
 
 // #include for whatever LCD hardware implementation is used.
 // Change g_print to point to your implementation.
-// Currently using i2c, 40x2
+// Currently using i2c, 16x2
 #include <Wire.h>
 #include "Adafruit_MCP23017.h"
 #include "Adafruit_RGBLCDShield.h"

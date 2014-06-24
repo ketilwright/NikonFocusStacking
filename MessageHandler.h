@@ -90,7 +90,7 @@ class IMessageHandler
     MessagePump *m_pump;
 protected:
     // Derived classes should write menu text strings
-    const char *menu[4];
+    const char *menu[5];
     // The caret is displayed as a > in the first display
     // column beneath a menu item
     unsigned char m_caretCol, m_caretRow;

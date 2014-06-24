@@ -33,7 +33,7 @@ extern uint8_t  EEMEM ePromRestoreFocus;
 extern IMessageHandler *g_pMain;
 
 // column start/end for setup field
-#define AmountFieldStart 0
+#define AmountFieldStartCol 0
 #define AmountFieldEnd   3
 #define FrameFieldStart  5
 #define FrameFieldEnd    7
@@ -67,7 +67,7 @@ void SetupHandler::advanceCaret(uint8_t dir) // -1 = left, 1 right. All other va
 	{
 		switch(caretColumn)
 		{
-			case AmountFieldStart:			{ caretColumn = RestoreFocusFieldEnd; break;}
+			case AmountFieldStartCol:			{ caretColumn = RestoreFocusFieldEnd; break;}
 			case FrameFieldStart:			{ caretColumn = AmountFieldEnd; break;}
 			case DelayFieldStart:			{ caretColumn = FrameFieldEnd; break;}
 			case RestoreFocusFieldStart:	{ caretColumn = DelayFieldEnd; break;}
@@ -81,7 +81,7 @@ void SetupHandler::advanceCaret(uint8_t dir) // -1 = left, 1 right. All other va
 			case AmountFieldEnd:			{ caretColumn = FrameFieldStart; break;}
 			case FrameFieldEnd:				{ caretColumn = DelayFieldStart; break;}
 			case DelayFieldEnd:				{ caretColumn = RestoreFocusFieldStart; break;}
-			case RestoreFocusFieldEnd:		{ caretColumn = AmountFieldStart; break;}
+			case RestoreFocusFieldEnd:		{ caretColumn = AmountFieldStartCol; break;}
 			default:						{ ++caretColumn; break;}
 		}
 	}
@@ -104,7 +104,7 @@ MsgResp SetupHandler::processMessage(Msg& msg)
 			{
 				// change amount entry
 				change = -1000; // todo: consider a power of ten == AmountFieldEnd - AmountFieldStart + 1
-				while(caretColumn-- != AmountFieldStart)
+				while(caretColumn-- != AmountFieldStartCol)
 				{
 					change /= 10;
 				}
@@ -141,7 +141,7 @@ MsgResp SetupHandler::processMessage(Msg& msg)
 			{
 				// change amount entry
 				change = 1000; // todo: consider a power of ten == AmountFieldEnd - AmountFieldStart + 1
-				while(caretColumn-- != AmountFieldStart)
+				while(caretColumn-- != AmountFieldStartCol)
 				{
 					change /= 10;
 				}
@@ -221,7 +221,7 @@ MsgResp SetupHandler::processMessage(Msg& msg)
 void SetupHandler::show()
 {
 	g_print->clear();
-	printMenuItem(AmountFieldStart, 0/*row*/, 0);
+	printMenuItem(AmountFieldStartCol, 0/*row*/, 0);
 	printMenuItem(FrameFieldStart, 0/*row*/,1);
 	printMenuItem(DelayFieldStart, 0/*row*/,2);
 	printMenuItem(RestoreFocusFieldStart, 0/*row*/,3);
@@ -245,7 +245,7 @@ void SetupHandler::updateDriveAmountUI(int change)
 		val /= 10;
 		++digits;
 	}
-    g_print->setCursor(AmountFieldStart, 1);
+    g_print->setCursor(AmountFieldStartCol, 1);
 	for(unsigned char z = 0; z < 4 - digits; z++) g_print->print(F("0"));
     g_print->print(m_driveAmount);
 	g_print->setCursor(getCaretCol(), 1);

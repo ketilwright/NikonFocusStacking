@@ -24,14 +24,25 @@
 #include "NikType003.h"
 #include "SetupHandler.h"
 
-#define MarkStartCol 0
-#define MarkStartRow 0
-#define MarkEndCol 8
-#define MarkEndRow 0
-#define AmountCol 0
-#define AmountRow 1
-#define AmountFieldStart 4
-#define AmountFieldEnd 7
+// amount menu indicator in row 0
+#define AmountMenuItemCol 0
+#define AmountMenuItemRow 0
+// amount field in row 1
+#define AmountFieldStartCol 0
+#define AmountFieldEndCol 3
+#define AmountFieldRow 1
+
+#define MarkStartMenuItemCol 5
+#define MarkStartMenuItemRow 0
+
+#define MarkEndMenuItemCol 13
+#define MarkEndMenuItemRow 0
+
+#define TestMenuItemCol 5
+#define TestMenuItemRow 1
+
+#define DoneMenuItemCol 12
+#define DoneMenuItemRow 1
 
 extern IMessageHandler *g_pMain;
 extern SetupHandler *g_pSetup;
@@ -44,13 +55,16 @@ ManualHandler::ManualHandler(MessagePump *_pump)
 	menu[0] = "Start";
 	menu[1] = "End";
 	menu[2] = "Amt";
+	menu[3] = "Test";
+	menu[4] = "Done";
 } 
 
 MsgResp ManualHandler::processMessage(Msg& msg)
 {
+	if(eButtonActionPress != msg.m_type) return eFail;
 	MsgResp rsp = eSuccess;
-	if(eButtonActionPress != msg.m_type) return rsp;
-	
+	uint8_t col = getCaretCol();
+	uint8_t row = getCaretRow();
 	switch(msg.m_code)
 	{
 		case eLeft:
@@ -65,19 +79,43 @@ MsgResp ManualHandler::processMessage(Msg& msg)
 		}
 		case eDown:
 		{
-			// advance focus backward
-			focus(1);
+			if((TestMenuItemCol == col) && (TestMenuItemRow == row))
+			{
+				focus(1); // backward	
+			}
+			else if((col <= AmountFieldEndCol) && (AmountFieldRow == row))
+			{
+				rsp = g_pSetup->processMessage(msg);
+			}
 			break;
 		}
 		case eUp:
 		{
-			// advance focus forward
-			focus(2);
+			if((TestMenuItemCol == col) && (TestMenuItemRow == row))
+			{
+				focus(2); // forward
+			}
+			else if((col <= AmountFieldEndCol) && (AmountFieldRow == row))
+			{
+				rsp = g_pSetup->processMessage(msg);
+			}
 			break; 
 		}
 		case eSelect:
 		{
-			msg.m_nextHandler = g_pMain;
+			if((MarkStartMenuItemCol == col) && (MarkStartMenuItemRow == row))
+			{
+				// mark start
+			}
+			else if((MarkEndMenuItemCol == col) && (MarkEndMenuItemRow == row))
+			{
+				// mark end
+			}
+			else if((DoneMenuItemCol == col) && (DoneMenuItemRow == row))
+			{
+				msg.m_nextHandler = g_pMain;
+			}
+			
 			break;
 		}
 		default:
@@ -92,53 +130,73 @@ MsgResp ManualHandler::processMessage(Msg& msg)
 
 void ManualHandler::advanceCaret(uint8_t dir)
 {
-	if(0xff == dir)
+	uint8_t col = getCaretCol();
+	uint8_t row = getCaretRow();
+	if(0xff == dir) // left
 	{
-		// left
-		if(getCaretCol() == MarkStartCol && getCaretRow() == MarkStartRow)
+		if((MarkStartMenuItemCol == col) && (MarkStartMenuItemRow == row))
 		{
-			// currently on mark start, move to end of amount field
-			moveCaret(AmountCol, AmountFieldEnd);
+			// move from Start -> Done
+			moveCaret(DoneMenuItemCol, DoneMenuItemRow);
 		}
-		else if(getCaretCol() == MarkEndCol && getCaretRow() == MarkEndRow)
+		else if((MarkEndMenuItemCol == col) && (MarkEndMenuItemRow == row))
 		{
-			// currently on mark end, move to mark start field
-			moveCaret(MarkStartCol, MarkStartRow);
+			// move from End -> Start
+			moveCaret(MarkStartMenuItemCol, MarkStartMenuItemRow);
 		}
-		else if(getCaretCol() == AmountFieldStart && getCaretRow() == AmountRow)
+		else if((AmountFieldStartCol == col) && (AmountFieldRow == row))
 		{
-			// currently at start of amount field, move to mark end field
-			moveCaret(MarkEndCol, MarkEndRow);
+			// move from beginning of amount field -> End
+			moveCaret(MarkEndMenuItemCol, MarkEndMenuItemRow);
 		}
-		else if(getCaretRow() == AmountRow && getCaretCol() > AmountFieldStart && getCaretCol() <= AmountFieldEnd)
+		else if((col > AmountFieldStartCol) && (col <= AmountFieldEndCol) && (AmountFieldRow == row))
 		{
-			// move caret within amount field
-			moveCaret(getCaretCol() - 1, AmountRow);
+			// move within the amount field
+			moveCaret(col - 1, row);
 		}
+		else if((TestMenuItemCol == col) && (TestMenuItemRow == row))
+		{
+			// move from Test menu to end of amount field
+			moveCaret(AmountFieldEndCol, AmountFieldRow);
+		}
+		else if((DoneMenuItemCol == col) && (DoneMenuItemRow == row))
+		{
+			// move from Done item -> Test item
+			moveCaret(TestMenuItemCol, TestMenuItemRow);
+		}
+		
 	}
-	else if(1 == dir)
+	else if(1 == dir) // right
 	{
-		// right
-		if(getCaretCol() == MarkStartCol && getCaretRow() == MarkStartRow)
+		if((MarkStartMenuItemCol == col) && (MarkStartMenuItemRow == row))
 		{
-			// currently on mark start, move to mark end field
-			moveCaret(MarkEndCol, MarkEndRow);
+			// move from mark start -> mark end
+			moveCaret(MarkEndMenuItemCol, MarkEndMenuItemRow);
 		}
-		else if(getCaretCol() == MarkEndCol && getCaretRow() == MarkEndRow)
+		else if((MarkEndMenuItemCol == col) && (MarkEndMenuItemRow == row))
 		{
-			// currently on mark end, move to start of amount field
-			moveCaret(AmountFieldStart, AmountRow);
+			// move from mark end -> amount field
+			moveCaret(AmountFieldStartCol, AmountFieldRow);
 		}
-		else if(getCaretCol() == AmountFieldEnd && getCaretRow() == AmountRow)
+		else if((col >= AmountFieldStartCol) && (col < AmountFieldEndCol) && (AmountFieldRow == row))
 		{
-			// currently at the end of the amount field, move to the
-			// mark start field
-			moveCaret(MarkStartCol, MarkStartRow);
+			// move within the amount field
+			moveCaret(col + 1, AmountFieldRow);
 		}
-		else if(getCaretRow() == AmountRow && getCaretCol() >= AmountFieldStart && getCaretCol() < AmountFieldEnd)
+		else if((AmountFieldEndCol == col) && (AmountFieldRow == row))
 		{
-			// move caret within the amount field
-			moveCaret(getCaretCol() + 1, AmountRow);
+			// move from end of amount field to done
+			moveCaret(TestMenuItemCol, TestMenuItemRow);
+		}
+		else if((TestMenuItemCol == col) && (TestMenuItemRow == row))
+		{
+			// move from test -> donw
+			moveCaret(DoneMenuItemCol, DoneMenuItemRow);
+		}
+		else if((DoneMenuItemCol == col) && (DoneMenuItemRow == row))
+		{
+			// move from Done -> Mark Start
+			moveCaret(MarkStartMenuItemCol, MarkStartMenuItemRow);
 		}
 	}
 }
@@ -146,11 +204,13 @@ void ManualHandler::advanceCaret(uint8_t dir)
 void ManualHandler::show()
 {
 	g_print->clear();
-	printMenuItem(MarkStartCol, MarkStartRow, 0);
-	printMenuItem(MarkEndCol, MarkEndRow, 1);
-	printMenuItem(AmountCol, AmountRow, 2);
-	
-	moveCaret(MarkStartCol, MarkStartRow);
+	printMenuItem(MarkStartMenuItemCol, MarkStartMenuItemRow, 0);
+	printMenuItem(MarkEndMenuItemCol, MarkEndMenuItemRow, 1);
+	printMenuItem(AmountMenuItemCol, AmountMenuItemRow, 2);
+	printMenuItem(TestMenuItemCol, TestMenuItemRow, 3);
+	printMenuItem(DoneMenuItemCol, DoneMenuItemRow, 4);
+	g_pSetup->updateDriveAmountUI(0);
+	moveCaret(MarkStartMenuItemCol, MarkStartMenuItemRow);
 	showCaret(true);
 	
 }
