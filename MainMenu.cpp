@@ -113,7 +113,7 @@ void MainMenuHandler::show()
 	g_print->print(menu[1]);
 	g_print->setCursor(RunMenuPosCol, RunMenuPosRow);
 	g_print->print(menu[2]);
-	moveCaret(0, 0);
+	g_print->setCursor(0, 0);
 }
 
 void MainMenuHandler::advanceCaret(uint8_t dir) // -1 = left, 1 right. All other values ignored
@@ -123,15 +123,15 @@ void MainMenuHandler::advanceCaret(uint8_t dir) // -1 = left, 1 right. All other
 		// left
 		if(g_print->getCaretCol() == SetupMenuPosCol && g_print->getCaretRow() == SetupMenuPosRow)
 		{
-			moveCaret(RunMenuPosCol, RunMenuPosRow);
+			g_print->setCursor(RunMenuPosCol, RunMenuPosRow);
 		}
 		else if(g_print->getCaretCol() == ModelMenuPosCol && g_print->getCaretRow() == ModelMenuPosRow)
 		{
-			moveCaret(SetupMenuPosCol, SetupMenuPosRow);
+			g_print->setCursor(SetupMenuPosCol, SetupMenuPosRow);
 		}
 		else if(g_print->getCaretCol() == RunMenuPosCol && g_print->getCaretRow() == RunMenuPosRow)
 		{
-			moveCaret(ModelMenuPosCol, ModelMenuPosRow);
+			g_print->setCursor(ModelMenuPosCol, ModelMenuPosRow);
 		}
 	}
 	else if(1 == dir)
@@ -139,15 +139,15 @@ void MainMenuHandler::advanceCaret(uint8_t dir) // -1 = left, 1 right. All other
 		// right
 		if(g_print->getCaretCol() == SetupMenuPosCol && g_print->getCaretRow() == SetupMenuPosRow)
 		{
-			moveCaret(ModelMenuPosCol, ModelMenuPosRow);
+			g_print->setCursor(ModelMenuPosCol, ModelMenuPosRow);
 		}
 		else if(g_print->getCaretCol() == ModelMenuPosCol && g_print->getCaretRow() == ModelMenuPosRow)
 		{
-			moveCaret(RunMenuPosCol, RunMenuPosRow);
+			g_print->setCursor(RunMenuPosCol, RunMenuPosRow);
 		}
 		else if(g_print->getCaretCol() == RunMenuPosCol && g_print->getCaretRow() == RunMenuPosRow)
 		{
-			moveCaret(SetupMenuPosCol, SetupMenuPosRow);
+			g_print->setCursor(SetupMenuPosCol, SetupMenuPosRow);
 		}
 	}
 }

@@ -106,10 +106,7 @@ public:
     // Override this method to write any additional output that is required.
     // Sub classes should call IMessageHandler::show() if they override it,
     // in order for the caret to be displayed in the current location.
-    virtual void show();
-    // Moves the caret from one line to another in the 1st display column
-    //void moveCaret(eCaretMoveDir);
-	void moveCaret(uint8_t col, uint8_t row);
+    virtual void show() = 0;
 };
 
 

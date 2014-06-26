@@ -74,7 +74,7 @@ void SetupHandler::advanceCaret(uint8_t dir) // -1 = left, 1 right. All other va
 			default:						{ ++caretColumn; break;}
 		}
 	}
-	moveCaret(caretColumn, 1);
+	g_print->setCursor(caretColumn, 1);
 }
 
 MsgResp SetupHandler::processMessage(Msg& msg)
@@ -224,7 +224,7 @@ void SetupHandler::show()
 	m_numFrames.display(FrameFieldStart, FrameFieldRow);
     m_frameDelaySeconds.display(DelayFieldStart, DelayFieldRow);
 	updateRestoreFocusUI(0);
-	moveCaret(0, 1);
+	g_print->setCursor(0, 1);
 }
 
 void SetupHandler::updateRestoreFocusUI(int change)

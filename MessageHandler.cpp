@@ -37,38 +37,29 @@ void IMessageHandler::printMenuItem(uint8_t col, uint8_t row, uint8_t item)
 }
 // Draws the menu text, indenting all lines but
 // the 1st by one column
-void IMessageHandler::show()
-{
-    g_print->clear();
-	
-	if(menu[0])
-	{
-		g_print->setCursor(0, 0);
-		g_print->print(menu[0]);
-	}
-	if(menu[1])
-	{
-		g_print->setCursor(8, 0);
-		g_print->print(menu[1]);
-	}
-	if(menu[2])
-	{
-		g_print->setCursor(0, 1);
-		g_print->print(menu[2]);
-	}
-	if(menu[3])
-	{
-		g_print->setCursor(8, 1);
-		g_print->print(menu[2]);
-	}
-}
-
-// Redraws the caret at the specified location
-// TODO: get rid of this, just use g_print
-void IMessageHandler::moveCaret(uint8_t col, uint8_t row)
-{
-	//showCaret(false);
-	g_print->setCursor(col, row);
-	//showCaret(true);
-}
-
+//void IMessageHandler::show()
+//{
+    //g_print->clear();
+	//
+	//if(menu[0])
+	//{
+		//g_print->setCursor(0, 0);
+		//g_print->print(menu[0]);
+	//}
+	//if(menu[1])
+	//{
+		//g_print->setCursor(8, 0);
+		//g_print->print(menu[1]);
+	//}
+	//if(menu[2])
+	//{
+		//g_print->setCursor(0, 1);
+		//g_print->print(menu[2]);
+	//}
+	//if(menu[3])
+	//{
+		//g_print->setCursor(8, 1);
+		//g_print->print(menu[2]);
+	//}
+//}
+//

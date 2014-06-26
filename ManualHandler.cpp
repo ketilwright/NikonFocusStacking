@@ -137,32 +137,32 @@ void ManualHandler::advanceCaret(uint8_t dir)
 		if((MarkStartMenuItemCol == col) && (MarkStartMenuItemRow == row))
 		{
 			// move from Start -> Done
-			moveCaret(DoneMenuItemCol, DoneMenuItemRow);
+			g_print->setCursor(DoneMenuItemCol, DoneMenuItemRow);
 		}
 		else if((MarkEndMenuItemCol == col) && (MarkEndMenuItemRow == row))
 		{
 			// move from End -> Start
-			moveCaret(MarkStartMenuItemCol, MarkStartMenuItemRow);
+			g_print->setCursor(MarkStartMenuItemCol, MarkStartMenuItemRow);
 		}
 		else if((AmountFieldStartCol == col) && (AmountFieldRow == row))
 		{
 			// move from beginning of amount field -> End
-			moveCaret(MarkEndMenuItemCol, MarkEndMenuItemRow);
+			g_print->setCursor(MarkEndMenuItemCol, MarkEndMenuItemRow);
 		}
 		else if((col > AmountFieldStartCol) && (col <= AmountFieldEndCol) && (AmountFieldRow == row))
 		{
 			// move within the amount field
-			moveCaret(col - 1, row);
+			g_print->setCursor(col - 1, row);
 		}
 		else if((TestMenuItemCol == col) && (TestMenuItemRow == row))
 		{
 			// move from Test menu to end of amount field
-			moveCaret(AmountFieldEndCol, AmountFieldRow);
+			g_print->setCursor(AmountFieldEndCol, AmountFieldRow);
 		}
 		else if((DoneMenuItemCol == col) && (DoneMenuItemRow == row))
 		{
 			// move from Done item -> Test item
-			moveCaret(TestMenuItemCol, TestMenuItemRow);
+			g_print->setCursor(TestMenuItemCol, TestMenuItemRow);
 		}
 		
 	}
@@ -171,32 +171,32 @@ void ManualHandler::advanceCaret(uint8_t dir)
 		if((MarkStartMenuItemCol == col) && (MarkStartMenuItemRow == row))
 		{
 			// move from mark start -> mark end
-			moveCaret(MarkEndMenuItemCol, MarkEndMenuItemRow);
+			g_print->setCursor(MarkEndMenuItemCol, MarkEndMenuItemRow);
 		}
 		else if((MarkEndMenuItemCol == col) && (MarkEndMenuItemRow == row))
 		{
 			// move from mark end -> amount field
-			moveCaret(AmountFieldStartCol, AmountFieldRow);
+			g_print->setCursor(AmountFieldStartCol, AmountFieldRow);
 		}
 		else if((col >= AmountFieldStartCol) && (col < AmountFieldEndCol) && (AmountFieldRow == row))
 		{
 			// move within the amount field
-			moveCaret(col + 1, AmountFieldRow);
+			g_print->setCursor(col + 1, AmountFieldRow);
 		}
 		else if((AmountFieldEndCol == col) && (AmountFieldRow == row))
 		{
 			// move from end of amount field to done
-			moveCaret(TestMenuItemCol, TestMenuItemRow);
+			g_print->setCursor(TestMenuItemCol, TestMenuItemRow);
 		}
 		else if((TestMenuItemCol == col) && (TestMenuItemRow == row))
 		{
 			// move from test -> donw
-			moveCaret(DoneMenuItemCol, DoneMenuItemRow);
+			g_print->setCursor(DoneMenuItemCol, DoneMenuItemRow);
 		}
 		else if((DoneMenuItemCol == col) && (DoneMenuItemRow == row))
 		{
 			// move from Done -> Mark Start
-			moveCaret(MarkStartMenuItemCol, MarkStartMenuItemRow);
+			g_print->setCursor(MarkStartMenuItemCol, MarkStartMenuItemRow);
 		}
 	}
 }
@@ -210,7 +210,7 @@ void ManualHandler::show()
 	printMenuItem(TestMenuItemCol, TestMenuItemRow, 3);
 	printMenuItem(DoneMenuItemCol, DoneMenuItemRow, 4);
 	g_pSetup->m_driveAmount.display(AmountFieldStartCol, AmountFieldRow);
-	moveCaret(MarkStartMenuItemCol, MarkStartMenuItemRow);
+	g_print->setCursor(MarkStartMenuItemCol, MarkStartMenuItemRow);
 }
 void ManualHandler::focus(uint8_t dir)
 {
