@@ -63,8 +63,8 @@ MsgResp ManualHandler::processMessage(Msg& msg)
 {
 	if(eButtonActionPress != msg.m_type) return eFail;
 	MsgResp rsp = eSuccess;
-	uint8_t col = getCaretCol();
-	uint8_t row = getCaretRow();
+	uint8_t col = g_print->getCaretCol();
+	uint8_t row = g_print->getCaretRow();
 	switch(msg.m_code)
 	{
 		case eLeft:
@@ -130,8 +130,8 @@ MsgResp ManualHandler::processMessage(Msg& msg)
 
 void ManualHandler::advanceCaret(uint8_t dir)
 {
-	uint8_t col = getCaretCol();
-	uint8_t row = getCaretRow();
+	uint8_t col = g_print->getCaretCol();
+	uint8_t row = g_print->getCaretRow();
 	if(0xff == dir) // left
 	{
 		if((MarkStartMenuItemCol == col) && (MarkStartMenuItemRow == row))
@@ -209,11 +209,8 @@ void ManualHandler::show()
 	printMenuItem(AmountMenuItemCol, AmountMenuItemRow, 2);
 	printMenuItem(TestMenuItemCol, TestMenuItemRow, 3);
 	printMenuItem(DoneMenuItemCol, DoneMenuItemRow, 4);
-	//g_pSetup->updateDriveAmountUI(0);
 	g_pSetup->m_driveAmount.display(AmountFieldStartCol, AmountFieldRow);
 	moveCaret(MarkStartMenuItemCol, MarkStartMenuItemRow);
-	showCaret(true);
-	
 }
 void ManualHandler::focus(uint8_t dir)
 {

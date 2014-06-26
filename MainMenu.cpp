@@ -77,17 +77,17 @@ MsgResp MainMenuHandler::processMessage(Msg& msg)
 			}
             case eSelect:
             {
-				if(getCaretCol() == SetupMenuPosCol && getCaretRow() == SetupMenuPosRow)
+				if(g_print->getCaretCol() == SetupMenuPosCol && g_print->getCaretRow() == SetupMenuPosRow)
 				{
 					msg.m_nextHandler = g_pSetup;
 					rsp = eSuccess;
 				}
-				else if(getCaretCol() == ModelMenuPosCol && getCaretRow() == ModelMenuPosRow)
+				else if(g_print->getCaretCol() == ModelMenuPosCol && g_print->getCaretRow() == ModelMenuPosRow)
 				{
 					msg.m_nextHandler = g_pManual;
 					rsp = eSuccess;
 				}
-				else if(getCaretCol() == RunMenuPosCol && getCaretRow() == RunMenuPosRow)
+				else if(g_print->getCaretCol() == RunMenuPosCol && g_print->getCaretRow() == RunMenuPosRow)
 				{
 					msg.m_nextHandler = g_pRunStack;
 					rsp = eSuccess;
@@ -114,7 +114,6 @@ void MainMenuHandler::show()
 	g_print->setCursor(RunMenuPosCol, RunMenuPosRow);
 	g_print->print(menu[2]);
 	moveCaret(0, 0);
-	showCaret(true);
 }
 
 void MainMenuHandler::advanceCaret(uint8_t dir) // -1 = left, 1 right. All other values ignored
@@ -122,15 +121,15 @@ void MainMenuHandler::advanceCaret(uint8_t dir) // -1 = left, 1 right. All other
 	if(0xff == dir)
 	{
 		// left
-		if(getCaretCol() == SetupMenuPosCol && getCaretRow() == SetupMenuPosRow)
+		if(g_print->getCaretCol() == SetupMenuPosCol && g_print->getCaretRow() == SetupMenuPosRow)
 		{
 			moveCaret(RunMenuPosCol, RunMenuPosRow);
 		}
-		else if(getCaretCol() == ModelMenuPosCol && getCaretRow() == ModelMenuPosRow)
+		else if(g_print->getCaretCol() == ModelMenuPosCol && g_print->getCaretRow() == ModelMenuPosRow)
 		{
 			moveCaret(SetupMenuPosCol, SetupMenuPosRow);
 		}
-		else if(getCaretCol() == RunMenuPosCol && getCaretRow() == RunMenuPosRow)
+		else if(g_print->getCaretCol() == RunMenuPosCol && g_print->getCaretRow() == RunMenuPosRow)
 		{
 			moveCaret(ModelMenuPosCol, ModelMenuPosRow);
 		}
@@ -138,15 +137,15 @@ void MainMenuHandler::advanceCaret(uint8_t dir) // -1 = left, 1 right. All other
 	else if(1 == dir)
 	{
 		// right
-		if(getCaretCol() == SetupMenuPosCol && getCaretRow() == SetupMenuPosRow)
+		if(g_print->getCaretCol() == SetupMenuPosCol && g_print->getCaretRow() == SetupMenuPosRow)
 		{
 			moveCaret(ModelMenuPosCol, ModelMenuPosRow);
 		}
-		else if(getCaretCol() == ModelMenuPosCol && getCaretRow() == ModelMenuPosRow)
+		else if(g_print->getCaretCol() == ModelMenuPosCol && g_print->getCaretRow() == ModelMenuPosRow)
 		{
 			moveCaret(RunMenuPosCol, RunMenuPosRow);
 		}
-		else if(getCaretCol() == RunMenuPosCol && getCaretRow() == RunMenuPosRow)
+		else if(g_print->getCaretCol() == RunMenuPosCol && g_print->getCaretRow() == RunMenuPosRow)
 		{
 			moveCaret(SetupMenuPosCol, SetupMenuPosRow);
 		}

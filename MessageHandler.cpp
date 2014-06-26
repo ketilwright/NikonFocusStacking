@@ -63,19 +63,12 @@ void IMessageHandler::show()
 	}
 }
 
-// Draws or hides the caret.
-
-void IMessageHandler::showCaret(bool show)
-{
-	if(show) g_print->cursor();
-	else g_print->noCursor();
-}
-
 // Redraws the caret at the specified location
+// TODO: get rid of this, just use g_print
 void IMessageHandler::moveCaret(uint8_t col, uint8_t row)
 {
-	showCaret(false);
+	//showCaret(false);
 	g_print->setCursor(col, row);
-	showCaret(true);
+	//showCaret(true);
 }
 

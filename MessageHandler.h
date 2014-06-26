@@ -110,16 +110,6 @@ public:
     // Moves the caret from one line to another in the 1st display column
     //void moveCaret(eCaretMoveDir);
 	void moveCaret(uint8_t col, uint8_t row);
-    // Hides or shows the caret
-    void showCaret(bool);
-    // Returns the current col location.
-    unsigned char getCaretCol() const { return g_print->getCaretCol();}
-    // Moves the caret row location.
-    void setCaretCol(unsigned char col) { g_print->setCursor(col, g_print->getCaretRow());}
-	// returns the current caret row location		
-	unsigned char getCaretRow() const { return g_print->getCaretRow(); }		
-	// moves the caret row location
-	void setCaretRow(unsigned char row) { g_print->setCursor(g_print->getCaretCol(), row); }
 };
 
 

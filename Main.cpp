@@ -103,6 +103,7 @@ void setup() {
 	// Debugging output
 	// set up the LCD's number of columns and rows:
 	lcd.begin(16, 2);
+	lcd.cursor();
 	// Setup usb.
 	if (Usb.Init() == -1)
 	{

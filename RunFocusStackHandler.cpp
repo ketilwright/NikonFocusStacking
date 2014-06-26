@@ -47,7 +47,7 @@ MsgResp RunFocusStackHandler::processMessage(Msg& msg)
     MsgResp rsp = eFail;
     if(eButtonActionPress == msg.m_type)
     {
-        nk3.cancelFocusStack();
+		nk3.cancelFocusStack();
         msg.m_nextHandler = g_pMain;
         rsp = eSuccess;
     }
@@ -56,9 +56,9 @@ MsgResp RunFocusStackHandler::processMessage(Msg& msg)
 void RunFocusStackHandler::show()
 {
 	g_print->clear();
+	g_print->noCursor();
 	g_print->setCursor(0, 0);
 	g_print->print(menu[0]);
-	showCaret(false);
 	nk3.startFocusStack();
 }
 void RunFocusStackHandler::reportStatus(const __FlashStringHelper* msg)

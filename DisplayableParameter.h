@@ -18,7 +18,6 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-
 class DisplayableParameter
 {
 	int32_t m_curVal;
@@ -53,6 +52,8 @@ public:
 			val /= 10;
 			++digits;
 		}
+		// save cursor, print in the requested location, padding with
+		// zeros, and restore original cursor location.
 		g_print->saveCursorLocation();
 		g_print->setCursor(col, row);
 		for(uint8_t z = 0; z < m_fieldWidth - digits; z++) g_print->print(F("0"));

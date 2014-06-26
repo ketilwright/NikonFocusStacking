@@ -51,7 +51,7 @@ SetupHandler::~SetupHandler()
 
 void SetupHandler::advanceCaret(uint8_t dir) // -1 = left, 1 right. All other values ignored
 {
-	unsigned char caretColumn = getCaretCol();
+	unsigned char caretColumn = g_print->getCaretCol();
 	if(dir == 0xff)
 	{
 		switch(caretColumn)
@@ -82,7 +82,7 @@ MsgResp SetupHandler::processMessage(Msg& msg)
     MsgResp rsp = eFail;
 	if(eButtonActionPress != msg.m_type) return rsp;
 	// the amount up or down some parameter will be changed
-	unsigned char caretColumn = getCaretCol();
+	unsigned char caretColumn = g_print->getCaretCol();
 	int change = 0;
     // which button?
     switch(msg.m_code)
@@ -225,7 +225,6 @@ void SetupHandler::show()
     m_frameDelaySeconds.display(DelayFieldStart, DelayFieldRow);
 	updateRestoreFocusUI(0);
 	moveCaret(0, 1);
-    showCaret(true);
 }
 
 void SetupHandler::updateRestoreFocusUI(int change)

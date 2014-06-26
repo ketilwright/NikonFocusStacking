@@ -152,10 +152,9 @@ void NikType003::OnEvent(const NKEvent* ev)
         m_stateFlags.m_captureInProgress = 0;
 		if(0 == m_remainingFrames)
 		{
-			//restoreOriginalFocus();
-			// invoke focusStackNextFrame, which when
-			// 0 == m_remaining frames will just restore
-			// original focus
+			// focusStackNextFrame, which when 0 == m_remainingFrames,
+			// will renable the cursor, and may restore original focus
+			// if requested.
 			focusStackNextFrame();
 		}
     }
@@ -167,8 +166,8 @@ void NikType003::OnEvent(const NKEvent* ev)
 uint16_t NikType003::waitForReady(uint16_t maxAttempts)
 {
     unsigned long nNotReady = 0;
-    // Nikon docs explicitly say 2 attempts on device ready. You'd think we could
-    // just start with the while loop.
+    // Nikon docs explicitly say a minimum of 2 attempts on device ready. 
+	// You'd think we could just start with the while loop.
     uint16_t retDevReady = Operation(NK_OC_DeviceReady, 0, NULL);
     delay(m_checkReadyInternal);
     retDevReady = Operation(NK_OC_DeviceReady, 0, NULL);
@@ -187,21 +186,9 @@ uint16_t NikType003::waitForReady(uint16_t maxAttempts)
 // restore that for the next focus operation.
 uint16_t NikType003::enableLiveView(bool enable)
 {
-
-    uint16_t  ret = PTP_RC_GeneralError;
-    if(!enable)
-    {
-        ret  = Operation(PTP_OC_NIKON_EndLiveView, 0, NULL);
-    }
-    else
-    {
-        ret  = Operation(PTP_OC_NIKON_StartLiveView, 0, NULL);
-    }
-    if(PTP_RC_OK == ret)
-    {
-        m_stateFlags.m_lvEnabled  = enable;
-    }
-    return ret;
+	uint16_t rVal = Operation(enable ? PTP_OC_NIKON_StartLiveView : PTP_OC_NIKON_EndLiveView, 0, NULL);
+	if(PTP_RC_OK == rVal) m_stateFlags.m_lvEnabled = enable;
+	return rVal;
 }
 
 // PTP_OC_InitiateCapture will not work for our purposes.
@@ -312,7 +299,6 @@ uint16_t NikType003::prepareNextFrame()
 		{
 			cancelFocusStack();
 		}
-		
 	}
 	return retVal;
 }
@@ -325,8 +311,7 @@ uint16_t NikType003::focusStackNextFrame()
 		{
 			// following frames, if any are kicked off
 			// in the capture complete handling.
-			m_remainingFrames--;
-			if(0 == m_remainingFrames)
+			if(0 == --m_remainingFrames)
 			{
 				m_stateFlags.m_allFramesOK = 1;
 			}
@@ -351,6 +336,9 @@ uint16_t NikType003::focusStackNextFrame()
 	}
 	else
 	{
+		// we're done.
+		// restore the cursor, which was off during the run
+		g_print->cursor();
 		m_stateFlags.m_stackActive = false;
 		if(m_stateFlags.m_allFramesOK)
 		{
@@ -367,6 +355,7 @@ void NikType003::cancelFocusStack()
 {
     m_remainingFrames = 0;
 	m_stateFlags.m_stackActive = 0;
+	focusStackNextFrame();
 }
 
 // Function: restoreOriginalFocus();
