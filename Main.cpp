@@ -71,13 +71,13 @@ NikType003  nk3(&Usb, &nk3State);
 
 // EEPROM variables
 uint16_t EEMEM ePromFocusAmount = 100;
-uint16_t EEMEM ePromFrameDelay  = 5000;
-uint8_t  EEMEM ePromNumFrames = 10;
+uint16_t EEMEM ePromFrameDelay  = 5;
+uint16_t EEMEM ePromNumFrames = 10;
 uint8_t  EEMEM ePromRestoreFocus = 0;
 
 uint16_t g_savedFocusAmount = 100;
 uint16_t g_savedFrameDelay = 0;
-uint8_t g_savedNumFrames = 3;
+uint16_t g_savedNumFrames = 3;
 uint8_t g_savedRestoreFocus = 0;
 bool g_usbOK = true;
 
@@ -120,7 +120,7 @@ void setup() {
 		g_setup.setFrameDelaySeconds(g_savedFrameDelay);	
 	}
 	
-	if((g_savedNumFrames = eeprom_read_byte(&ePromNumFrames)) != 0xff)
+	if((g_savedNumFrames = eeprom_read_word(&ePromNumFrames)) != 0xffff)
 	{
 		g_setup.setNumFrames(g_savedNumFrames);
 	}

@@ -23,33 +23,22 @@
 #include <avr/eeprom.h>
 
 extern uint16_t g_savedFocusAmount;
-extern uint8_t g_savedNumFrames;
+extern uint16_t g_savedNumFrames;
 
 extern uint16_t EEMEM ePromFocusAmount;
 extern uint16_t EEMEM ePromFrameDelay;
-extern uint8_t  EEMEM ePromNumFrames;
+extern uint16_t  EEMEM ePromNumFrames;
 extern uint8_t  EEMEM ePromRestoreFocus;
 
 extern IMessageHandler *g_pMain;
-
-// column start/end for setup field
-#define AmountFieldStartCol 0
-#define AmountFieldEnd   3
-#define FrameFieldStart  5
-#define FrameFieldEnd    7
-#define DelayFieldStart  9
-#define DelayFieldEnd	 11
-#define RestoreFocusFieldStart 13
-#define RestoreFocusFieldEnd 13
-
 
 
 SetupHandler::SetupHandler(MessagePump *_pump, uint32_t driveAmount, uint32_t frames)
     :
     IMessageHandler(_pump),
-    m_driveAmount(driveAmount),
-    m_numFrames(frames),
-	m_frameDelaySeconds(0),
+	m_driveAmount(driveAmount, 1, 9999, 4),
+	m_numFrames(frames, 1, 999, 3),
+	m_frameDelaySeconds(0, 0, 999, 3),
 	m_restoreFocus(false)
 {
     menu[0] = "Amt";
@@ -67,7 +56,7 @@ void SetupHandler::advanceCaret(uint8_t dir) // -1 = left, 1 right. All other va
 	{
 		switch(caretColumn)
 		{
-			case AmountFieldStartCol:			{ caretColumn = RestoreFocusFieldEnd; break;}
+			case AmountFieldStartCol:		{ caretColumn = RestoreFocusFieldEnd; break;}
 			case FrameFieldStart:			{ caretColumn = AmountFieldEnd; break;}
 			case DelayFieldStart:			{ caretColumn = FrameFieldEnd; break;}
 			case RestoreFocusFieldStart:	{ caretColumn = DelayFieldEnd; break;}
@@ -108,7 +97,8 @@ MsgResp SetupHandler::processMessage(Msg& msg)
 				{
 					change /= 10;
 				}
-				updateDriveAmountUI(change);
+				m_driveAmount.changeVal(change);
+				m_driveAmount.display(AmountFieldStartCol, AmountFieldRow);
 			}
 			else if((caretColumn >= FrameFieldStart) && (caretColumn <= FrameFieldEnd))
 			{
@@ -117,7 +107,8 @@ MsgResp SetupHandler::processMessage(Msg& msg)
 				{
 					change /= 10;
 				}
-				updateFramesUI(change);
+				m_numFrames.changeVal(change);
+				m_numFrames.display(FrameFieldStart, FrameFieldRow);
 			}
 			else if((caretColumn >= DelayFieldStart) && (caretColumn <= DelayFieldEnd))
 			{
@@ -127,7 +118,8 @@ MsgResp SetupHandler::processMessage(Msg& msg)
 				{
 					change /= 10;
 				}
-				updateFrameDelayUI(change);
+				m_frameDelaySeconds.changeVal(change);
+				m_frameDelaySeconds.display(DelayFieldStart, DelayFieldRow);
 			}
 			else if((caretColumn >= RestoreFocusFieldStart) && (caretColumn <= RestoreFocusFieldEnd))
 			{
@@ -145,7 +137,8 @@ MsgResp SetupHandler::processMessage(Msg& msg)
 				{
 					change /= 10;
 				}
-				updateDriveAmountUI(change);
+				m_driveAmount.changeVal(change);
+				m_driveAmount.display(AmountFieldStartCol, AmountFieldRow);
 			}
 			else if((caretColumn >= FrameFieldStart) && (caretColumn <= FrameFieldEnd))
 			{
@@ -154,7 +147,8 @@ MsgResp SetupHandler::processMessage(Msg& msg)
 				{
 					change /= 10;
 				}
-				updateFramesUI(change);
+				m_numFrames.changeVal(change);
+				m_numFrames.display(FrameFieldStart, FrameFieldRow);
 			}
 			else if((caretColumn >= DelayFieldStart) && (caretColumn <= DelayFieldEnd))
 			{
@@ -164,7 +158,8 @@ MsgResp SetupHandler::processMessage(Msg& msg)
 				{
 					change /= 10;
 				}
-				updateFrameDelayUI(change);
+				m_frameDelaySeconds.changeVal(change);
+				m_frameDelaySeconds.display(DelayFieldStart, DelayFieldRow);
 			}
 			else if((caretColumn >= RestoreFocusFieldStart) && (caretColumn <= RestoreFocusFieldEnd))
 			{
@@ -187,21 +182,21 @@ MsgResp SetupHandler::processMessage(Msg& msg)
         {
             if(eButtonActionPress == msg.m_type)
             {
-	            // write any settings to the eprom that have changed.
+	            // write any settings that have changed to the eeprom.
 	            uint16_t savedFocusAmt = eeprom_read_word(&ePromFocusAmount);
-	            if(savedFocusAmt != m_driveAmount)
+	            if(savedFocusAmt != m_driveAmount.getVal())
 	            {
-		            eeprom_write_word(&ePromFocusAmount, m_driveAmount);
+		            eeprom_write_word(&ePromFocusAmount, m_driveAmount.getVal());
 	            }
 				uint16_t savedFrameDelay = eeprom_read_word(&ePromFrameDelay);
-				if(savedFrameDelay != m_frameDelaySeconds)
+				if(savedFrameDelay != m_frameDelaySeconds.getVal())
 				{
-					eeprom_write_word(&ePromFrameDelay, m_frameDelaySeconds);
+					eeprom_write_word(&ePromFrameDelay, m_frameDelaySeconds.getVal());
 				}
-	            uint8_t savedNumFrames = eeprom_read_byte(&ePromNumFrames);
-	            if(savedNumFrames != m_numFrames)
+	            uint16_t savedNumFrames = eeprom_read_word(&ePromNumFrames);
+	            if(savedNumFrames != m_numFrames.getVal())
 	            {
-		            eeprom_write_byte(&ePromNumFrames, m_numFrames);
+		            eeprom_write_word(&ePromNumFrames, m_numFrames.getVal());
 	            }
 				uint8_t savedRestoreFocus = eeprom_read_byte(&ePromRestoreFocus);
 				if(savedRestoreFocus != m_restoreFocus)
@@ -225,81 +220,21 @@ void SetupHandler::show()
 	printMenuItem(FrameFieldStart, 0/*row*/,1);
 	printMenuItem(DelayFieldStart, 0/*row*/,2);
 	printMenuItem(RestoreFocusFieldStart, 0/*row*/,3);
-    updateDriveAmountUI(0); // 0: don't change, just show the current value
-    updateFramesUI(0);      // 0: don't change, just show the current value
-	updateFrameDelayUI(0);  // 0: don't change, just show the current value
+    m_driveAmount.display(AmountFieldStartCol, AmountFieldRow);
+	m_numFrames.display(FrameFieldStart, FrameFieldRow);
+    m_frameDelaySeconds.display(DelayFieldStart, DelayFieldRow);
 	updateRestoreFocusUI(0);
 	moveCaret(0, 1);
     showCaret(true);
 }
-void SetupHandler::updateDriveAmountUI(int change)
-{
-	m_driveAmount += change;
-	if(m_driveAmount < 1 ) m_driveAmount = 1;
-    if(m_driveAmount > 9999) m_driveAmount = 9999;
-	// set cursor based on how many digits are shown
-	unsigned char digits = 0; 
-	uint32_t val = m_driveAmount;
-	while(val > 0) 
-	{
-		val /= 10;
-		++digits;
-	}
-	uint8_t tempCol = getCaretCol();
-    g_print->setCursor(AmountFieldStartCol, 1);
-	for(unsigned char z = 0; z < 4 - digits; z++) g_print->print(F("0"));
-    g_print->print(m_driveAmount);
-	g_print->setCursor(tempCol, 1);
-}
-void SetupHandler::updateFramesUI(int change)
-{
-    m_numFrames += change;
-    if(m_numFrames < 1 ) m_numFrames = 1;
-    if(m_numFrames > 999) m_numFrames = 999;
-	// set cursor based on how many digits are shown
-	unsigned char digits = 0;
-	uint32_t val = m_numFrames;
-	
-	while(val > 0)
-	{
-		val /= 10;
-		++digits;
-	}
-	uint8_t tempCol = getCaretCol();
-	g_print->setCursor(FrameFieldStart, 1);
-    for(unsigned char z = 0; z < 3 - digits; z++) g_print->print(F("0"));
-    g_print->print(m_numFrames);
-	g_print->setCursor(tempCol, 1);
-}
-
-void SetupHandler::updateFrameDelayUI(int change)
-{
-	
-	m_frameDelaySeconds += change;
-	if(m_frameDelaySeconds < 0 ) m_frameDelaySeconds = 0;
-    if(m_frameDelaySeconds > 999) m_frameDelaySeconds = 999;
-	unsigned char digits = 0;
-	uint32_t val = m_frameDelaySeconds;
-	
-	while(val > 0)
-	{
-		val /= 10;
-		++digits;
-	}
-	uint8_t tempCol = getCaretCol();
-    g_print->setCursor(DelayFieldStart, 1);
-	for(unsigned char z = 0; z < 3 - digits; z++) g_print->print(F("0"));
-    if(0 != m_frameDelaySeconds) g_print->print(m_frameDelaySeconds);
-	g_print->setCursor(tempCol, 1);
-}
 
 void SetupHandler::updateRestoreFocusUI(int change)
 {
-	uint8_t tempCol = getCaretCol();
+	g_print->saveCursorLocation();
 	g_print->setCursor(RestoreFocusFieldStart, 1);
 	g_print->print(F("   "));		
 	g_print->setCursor(RestoreFocusFieldStart, 1);
 	if(0 != change) m_restoreFocus = !m_restoreFocus;
 	g_print->print( m_restoreFocus ? F("Yes") : F("No"));
-	g_print->setCursor(tempCol, 1);
+	g_print->restoreCursorLocation();
 }

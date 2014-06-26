@@ -209,7 +209,8 @@ void ManualHandler::show()
 	printMenuItem(AmountMenuItemCol, AmountMenuItemRow, 2);
 	printMenuItem(TestMenuItemCol, TestMenuItemRow, 3);
 	printMenuItem(DoneMenuItemCol, DoneMenuItemRow, 4);
-	g_pSetup->updateDriveAmountUI(0);
+	//g_pSetup->updateDriveAmountUI(0);
+	g_pSetup->m_driveAmount.display(AmountFieldStartCol, AmountFieldRow);
 	moveCaret(MarkStartMenuItemCol, MarkStartMenuItemRow);
 	showCaret(true);
 	

@@ -28,7 +28,17 @@
 class LCDImpl : public Adafruit_RGBLCDShield
 {
 	uint8_t m_col, m_row;
+	uint8_t m_savedCol, m_savedRow;
 public:
+	LCDImpl() 
+		: 
+		Adafruit_RGBLCDShield(),
+		m_col(0),
+		m_row(0),
+		m_savedCol(0),
+		m_savedRow(0)
+	{}		
+	
 	void setCursor(uint8_t col, uint8_t row)
 	{
 		m_col = col;
@@ -37,5 +47,14 @@ public:
 	}
 	uint8_t getCaretCol() const { return m_col; }
 	uint8_t getCaretRow() const { return m_row; }
+	void saveCursorLocation()
+	{
+		m_savedCol = m_col;
+		m_savedRow = m_row;
+	}		
+	void restoreCursorLocation()
+	{
+		setCursor(m_savedCol, m_savedRow);
+	}
 };
 extern LCDImpl *g_print;

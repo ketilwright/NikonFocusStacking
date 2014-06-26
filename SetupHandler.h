@@ -21,26 +21,39 @@
 #pragma once
 
 #include "MessageHandler.h"
+#include "DisplayableParameter.h"
 #include "Sketch.h"
+
+// column start/end for setup field
+#define AmountFieldStartCol 0
+#define AmountFieldRow 1
+#define AmountFieldEnd   3
+#define FrameFieldStart  5
+#define FrameFieldEnd    7
+#define FrameFieldRow	 1
+#define DelayFieldStart  9
+#define DelayFieldEnd	 11
+#define DelayFieldRow	1
+#define RestoreFocusFieldStart 13
+#define RestoreFocusFieldEnd 13
+
+
 class SetupHandler : public IMessageHandler
 {
-    int32_t m_driveAmount;
-    int32_t m_numFrames;
-	int32_t m_frameDelaySeconds;
+	DisplayableParameter m_driveAmount;
+	DisplayableParameter m_numFrames;
+	DisplayableParameter m_frameDelaySeconds;
 	bool    m_restoreFocus;
-    void updateDriveAmountUI(int change = 0);
-    void updateFramesUI(int change = 0);
-	void updateFrameDelayUI(int change = 0);
 	void updateRestoreFocusUI(int change = 0);
 	void advanceCaret(uint8_t dir); // -1 = left, 1 right. All other values ignored
  public:
     SetupHandler(MessagePump *_pump, uint32_t driveAmount, uint32_t frames);
-    uint32_t getDriveAmount() const { return m_driveAmount;}
-    void setDriveAmount(uint32_t driveAmount) { m_driveAmount = driveAmount;}
-    uint32_t getNumFrames() const { return m_numFrames; }
-    void setNumFrames(uint32_t numFrames) { m_numFrames = numFrames;}
-	uint32_t getFrameDelayMilliseconds() const { return m_frameDelaySeconds * 1000; }
-	void setFrameDelaySeconds(uint32_t delay) { m_frameDelaySeconds = delay; }
+    uint32_t getDriveAmount() const { return m_driveAmount.getVal();}
+    void setDriveAmount(uint32_t driveAmount) { m_driveAmount.setVal(driveAmount);}
+    uint32_t getNumFrames() const { return m_numFrames.getVal(); }
+    void setNumFrames(uint32_t numFrames) { m_numFrames.setVal(numFrames);}
+	uint32_t getFrameDelayMilliseconds() const { return m_frameDelaySeconds.getVal() * 1000; }
+	void setFrameDelaySeconds(uint32_t delay) { m_frameDelaySeconds.setVal(delay); }
 	
 	bool getRestoreFocus() const { return m_restoreFocus; }
 	void setRestoreFocus(bool restore) { m_restoreFocus = restore; }
