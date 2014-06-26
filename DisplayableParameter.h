@@ -57,7 +57,7 @@ public:
 		g_print->saveCursorLocation();
 		g_print->setCursor(col, row);
 		for(uint8_t z = 0; z < m_fieldWidth - digits; z++) g_print->print(F("0"));
-		g_print->print(m_curVal);
+		if(0 != m_curVal) g_print->print(m_curVal);
 		g_print->restoreCursorLocation();
 	}
 	int32_t getVal() const { return m_curVal; }

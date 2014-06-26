@@ -71,7 +71,7 @@ NikType003  nk3(&Usb, &nk3State);
 
 // EEPROM variables
 uint16_t EEMEM ePromFocusAmount = 100;
-uint16_t EEMEM ePromFrameDelay  = 5;
+uint16_t EEMEM ePromFrameDelay  = 0;
 uint16_t EEMEM ePromNumFrames = 10;
 uint8_t  EEMEM ePromRestoreFocus = 0;
 

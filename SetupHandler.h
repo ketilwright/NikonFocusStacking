@@ -32,7 +32,7 @@
 #define FrameFieldEnd    7
 #define FrameFieldRow	 1
 #define DelayFieldStart  9
-#define DelayFieldEnd	 11
+#define DelayFieldEnd	 10
 #define DelayFieldRow	1
 #define RestoreFocusFieldStart 13
 #define RestoreFocusFieldEnd 13

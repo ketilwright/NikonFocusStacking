@@ -38,7 +38,7 @@ SetupHandler::SetupHandler(MessagePump *_pump, uint32_t driveAmount, uint32_t fr
     IMessageHandler(_pump),
 	m_driveAmount(driveAmount, 1, 9999, 4),
 	m_numFrames(frames, 1, 999, 3),
-	m_frameDelaySeconds(0, 0, 999, 3),
+	m_frameDelaySeconds(0, 0, 99, 2),
 	m_restoreFocus(false)
 {
     menu[0] = "Amt";
@@ -113,7 +113,7 @@ MsgResp SetupHandler::processMessage(Msg& msg)
 			else if((caretColumn >= DelayFieldStart) && (caretColumn <= DelayFieldEnd))
 			{
 				// todo: consider a power of ten == DelayFieldEnd - DelayFieldStart + 1
-				change = -100;
+				change = -10;
 				while(caretColumn-- != DelayFieldStart)
 				{
 					change /= 10;
@@ -153,7 +153,7 @@ MsgResp SetupHandler::processMessage(Msg& msg)
 			else if((caretColumn >= DelayFieldStart) && (caretColumn <= DelayFieldEnd))
 			{
 				// todo: consider a power of ten == DelayFieldEnd - DelayFieldStart + 1
-				change = 100;
+				change = 10;
 				while(caretColumn-- != DelayFieldStart)
 				{
 					change /= 10;
