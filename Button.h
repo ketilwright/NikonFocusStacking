@@ -21,7 +21,8 @@
 #pragma once
 
 #include <stdint.h>
-#include "MessageHandler.h"
+//#include "MessageHandler.h"
+#include "Msg.h"
 
 // interface for checking button state.
 class ReadButtonState;

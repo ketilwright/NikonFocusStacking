@@ -19,10 +19,11 @@
  */
 
 #include "Button.h"
-#include "MessagePump.h"
-#include "MessageHandler.h"
+#include "Sketch.h"
+//#include "MessagePump.h"
+//#include "MessageHandler.h"
 #include "ReadButtonState.h"
-extern MessagePump g_pump;
+//extern MessagePump g_pump;
 
 Button::Button(ReadButtonState *buttonStateReader, int pin, MsgCode code, bool activeState)
     :

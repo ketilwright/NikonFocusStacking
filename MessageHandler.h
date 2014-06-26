@@ -19,69 +19,15 @@
  */
 
 #pragma once
+#include "Msg.h"
 #include "LcdImpl.h"
 #include <stdint.h>
-// Globally unique message types. This should
-// tell us what 'happened', not where the message
-// came from.
-enum MsgType
-{
-    eButtonActionPress		= 0x00,
-    eButtonActionRelease	= 0x01,
-    eButtonActionHoldShort  = 0x02,
-	eButtonActionHoldMedium = 0x03,
-	eButtonActionHoldLong   = 0x04,
-    eButtonActionNone	    = 0xff
-};
-
-// Globally unique message codes. This should
-// tell us where a message originated, eg which
-// button, not what 'happened'
-enum MsgCode
-{
-    eLeft,
-    eRight,
-    eUp,
-    eDown,
-    eSelect,
-    eUnknown
-};
-
-// Return codes from IMessageHandler::processMessage.
-enum MsgResp
-{
-    eSuccess,
-    eFail,
-};
 
 // Forward decls for message struct
 class MessagePump;
 class IMessageHandler;
 
-// Msg is dispatched from the loop function, and possibly
-// other places to the MessagePump.
-struct Msg
-{
-    // press, release,
-    MsgType m_type;
-    // eg, which button was pressed.
-    const MsgCode m_code;
-    // Deposit the value of next handler here before returning from
-    // IMessageHandler::processMessage to set make a new handler.
-    // Otherwise, leave it null. Depositing this pointer will force
-    // a complete refresh of the LCD.
-    IMessageHandler *m_nextHandler;
-    Msg(MsgType _type, MsgCode _code) : m_type(_type), m_code(_code), m_nextHandler(0){}
-};
 
-
-enum eCaretMoveDir
-{
-    eMoveDown = 0x00,
-    eMoveUp   = 0x01,
-    eMoveLeft = 0x02, // not currently implemented
-    eMoveRight= 0x03  // not currently implemented
-};
 
 
 class IMessageHandler
@@ -91,21 +37,23 @@ class IMessageHandler
 protected:
     // Derived classes should write menu text strings
     const char *menu[5];
-    // The caret is displayed as a > in the first display
-    // column beneath a menu item
-    //unsigned char m_caretCol, m_caretRow;
-	void printMenuItem(uint8_t col, uint8_t row, uint8_t item);
+	void printMenuItem(uint8_t col, uint8_t row, uint8_t item)
+	{
+		g_print->setCursor(col, row);
+		g_print->print(menu[item]);
+	}
 public:
     // Base class ctor just initializes OK on bottom line of menu[].
-    IMessageHandler(MessagePump* _pump);
+    IMessageHandler(MessagePump* pump)
+		:
+		m_pump(pump)
+	{
+		memset(menu, 0, sizeof(menu)); 
+	}
     // Must be implemented in derived classes.
     virtual MsgResp processMessage(Msg&) = 0;
-    // Base class implementation just draws whatever is contained in
-    // menu[]. All lines but the 1st are indented by one character.
-    // The first column of each row is reserved for the caret.
-    // Override this method to write any additional output that is required.
-    // Sub classes should call IMessageHandler::show() if they override it,
-    // in order for the caret to be displayed in the current location.
+    // Sub classes must implement show() to display
+	// their initial menu.
     virtual void show() = 0;
 };
 
