@@ -69,7 +69,7 @@ MsgResp ManualHandler::processMessage(Msg& msg)
 	{
 		case eLeft:
 		{
-			advanceCaret(0xff);
+			advanceCaret(0xff);	
 			break;
 		}
 		case eRight:
@@ -111,8 +111,21 @@ MsgResp ManualHandler::processMessage(Msg& msg)
 			{
 				// mark end
 			}
+			else if((TestMenuItemCol == col) && (TestMenuItemRow == row))
+			{
+				if(PTP_RC_OK == nk3.waitForReady(100))
+				{
+					nk3.enableLiveView(!nk3.isLiveViewEnabled());
+				}
+							
+			}
+
 			else if((DoneMenuItemCol == col) && (DoneMenuItemRow == row))
 			{
+				if(nk3.isLiveViewEnabled())
+				{
+					nk3.enableLiveView(false);
+				}
 				msg.m_nextHandler = g_pMain;
 			}
 			
@@ -214,17 +227,14 @@ void ManualHandler::show()
 }
 void ManualHandler::focus(uint8_t dir)
 {
-	if(PTP_RC_OK == nk3.enableLiveView(true))
+	if(nk3.isLiveViewEnabled())
 	{
-		if(PTP_RC_OK == nk3.waitForReady(1000))
+		if(PTP_RC_OK == nk3.waitForReady(100))
 		{
 			if(PTP_RC_OK == nk3.moveFocus(dir, g_pSetup->getDriveAmount()))
 			{
-				if(PTP_RC_OK == nk3.waitForReady(1000))
-				{
-					nk3.enableLiveView(false);
-				}
-			}
+				nk3.waitForReady(100);
+			}	
 		}
 	}
 }

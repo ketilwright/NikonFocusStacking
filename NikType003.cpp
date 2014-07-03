@@ -33,12 +33,12 @@ extern RunFocusStackHandler *g_pRunStack;
 NikType003::NikType003(USB *usb, PTPStateHandlers *stateHandler)
     :
     PTP(usb, stateHandler),
-    m_eventCheckInterval(1000), // milliseconds in between event checking.
+    m_eventCheckInterval(10), // milliseconds in between event checking.
     m_nextEventCheckTime(0),   // marker for the next time we poll for events
     m_remainingFrames(0),      // counts down focus stack frames
     m_restoreFocusDrive(0),    // reverse focus, to restore after stack
     m_idProduct(0),            // distinguishes model of camera
-    m_checkReadyInternal(100), // milliseconds delay between NK_OC_DeviceReady transactions.
+    m_checkReadyInternal(10), // milliseconds delay between NK_OC_DeviceReady transactions.
 	m_timeLastCapture(0)
 {}
 
@@ -220,11 +220,13 @@ uint16_t NikType003::captureToCard()
 //      amount     : an apparently dimensionless and undocumented quantity.
 uint16_t NikType003::moveFocus(uint32_t direction, uint32_t amount)
 {
-    OperFlags	flags		= { 2, 0, 0, 0, 0, 0 };
+	//Serial.print("moveFocus: direction: "); Serial.print(direction); Serial.print(" amount "); Serial.print(amount); Serial.println();
+    //OperFlags	flags		= { 2, 0, 0, 0, 0, 0 };
     uint32_t	params[2];
-    params[0]	= (uint32_t)direction;
-    params[1]	= (uint32_t)amount;
-    return Transaction(PTP_OC_NIKON_MfDrive, &flags, params, NULL);
+    params[0]	= direction;
+    params[1]	= amount;
+	return Operation(PTP_OC_NIKON_MfDrive, 2, params);
+    //return Transaction(PTP_OC_NIKON_MfDrive, &flags, params, NULL);
 }
 
 // initiates the 1st frame of focus stack operation,

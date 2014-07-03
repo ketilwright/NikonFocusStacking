@@ -101,6 +101,7 @@ Button* buttons[5] = {&buttonLeft, &buttonRight, &buttonUp, &buttonDown, &button
 
 void setup() {
 	// Debugging output
+	Serial.begin(115200);
 	// set up the LCD's number of columns and rows:
 	lcd.begin(16, 2);
 	lcd.cursor();
