@@ -24,6 +24,7 @@
 #include "SetupHandler.h"
 #include "RunFocusStackHandler.h"
 #include "LcdImpl.h"
+#include "ptpdebug.h"
 extern MessagePump g_pump;
 extern MainMenuHandler *g_pMain;
 extern SetupHandler *g_pSetup;
@@ -33,12 +34,12 @@ extern RunFocusStackHandler *g_pRunStack;
 NikType003::NikType003(USB *usb, PTPStateHandlers *stateHandler)
     :
     PTP(usb, stateHandler),
-    m_eventCheckInterval(10), // milliseconds in between event checking.
+    m_eventCheckInterval(100), // milliseconds in between event checking.
     m_nextEventCheckTime(0),   // marker for the next time we poll for events
     m_remainingFrames(0),      // counts down focus stack frames
     m_restoreFocusDrive(0),    // reverse focus, to restore after stack
     m_idProduct(0),            // distinguishes model of camera
-    m_checkReadyInternal(10), // milliseconds delay between NK_OC_DeviceReady transactions.
+    m_checkReadyInternal(100), // milliseconds delay between NK_OC_DeviceReady transactions.
 	m_timeLastCapture(0)
 {}
 
@@ -169,12 +170,18 @@ uint16_t NikType003::waitForReady(uint16_t maxAttempts)
     // Nikon docs explicitly say a minimum of 2 attempts on device ready. 
 	// You'd think we could just start with the while loop.
     uint16_t retDevReady = Operation(NK_OC_DeviceReady, 0, NULL);
+    PTPTRACE2("waitForReady1: ", retDevReady);
     delay(m_checkReadyInternal);
     retDevReady = Operation(NK_OC_DeviceReady, 0, NULL);
+    PTPTRACE2("waitForReady2: ", retDevReady);
     delay(m_checkReadyInternal);
-    while((PTP_RC_DeviceBusy == retDevReady) && (++nNotReady < maxAttempts))
+    while(
+            ((PTP_RC_DeviceBusy == retDevReady) || (PTP_RC_GeneralError == retDevReady)) && 
+            (++nNotReady < maxAttempts)
+        )
     {
         retDevReady = Operation(NK_OC_DeviceReady, 0, NULL);
+        PTPTRACE2("waitForReadyX: ", retDevReady);
         delay(m_checkReadyInternal);
     }
     return retDevReady;
@@ -220,13 +227,11 @@ uint16_t NikType003::captureToCard()
 //      amount     : an apparently dimensionless and undocumented quantity.
 uint16_t NikType003::moveFocus(uint32_t direction, uint32_t amount)
 {
-	//Serial.print("moveFocus: direction: "); Serial.print(direction); Serial.print(" amount "); Serial.print(amount); Serial.println();
-    //OperFlags	flags		= { 2, 0, 0, 0, 0, 0 };
+	// Serial.print("moveFocus: direction: "); Serial.print(direction); Serial.print(" amount "); Serial.print(amount); Serial.println();
     uint32_t	params[2];
     params[0]	= direction;
     params[1]	= amount;
 	return Operation(PTP_OC_NIKON_MfDrive, 2, params);
-    //return Transaction(PTP_OC_NIKON_MfDrive, &flags, params, NULL);
 }
 
 // initiates the 1st frame of focus stack operation,
@@ -333,6 +338,7 @@ uint16_t NikType003::focusStackNextFrame()
 		}
 		if(PTP_RC_OK != retVal)
 		{
+            g_pRunStack->reportStatus(F("Error"));
 			cancelFocusStack();
 		}
 	}

@@ -19,6 +19,13 @@
  */
 
 
+/*
+    TODO:
+    1) Various camera settings can interfere with focus stacking
+        i) Auto focus must be enabled on the lens
+        ii) AF must be enabled on the camera
+        iii) AF mode must be AFS (not AFC).
+*/
 
 #ifndef SKETCH_H_
 #include "Sketch.h"
