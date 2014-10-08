@@ -105,6 +105,7 @@ Button buttonDown(&buttonStateReader, BUTTON_DOWN, eDown, HIGH);
 Button buttonSelect(&buttonStateReader, BUTTON_SELECT, eSelect, HIGH);
 Button* buttons[5] = {&buttonLeft, &buttonRight, &buttonUp, &buttonDown, &buttonSelect};
 
+#include ".\Utility\BuildInfo.h"
 
 void setup() {
 	// Debugging output
@@ -118,6 +119,13 @@ void setup() {
 		g_print->print(F("USB did not start."));
 		g_usbOK = false;
 	}
+    else
+    {
+        char bufBuildDate[21];
+        GetBuildDate(bufBuildDate, sizeof(bufBuildDate));
+        g_print->print(bufBuildDate);
+        delay(1000);
+    }        
 	// Restore previous settings
 	if((g_savedFocusAmount = eeprom_read_word(&ePromFocusAmount)) != 0xffff)
 	{

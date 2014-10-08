@@ -72,6 +72,13 @@ class NikType003 : public PTP, public NKEventHandlers
     uint16_t m_checkReadyInternal;
 	// time since the last capture 
 	uint32_t m_timeLastCapture;
+     // The D7000 enforces a lower limit of 1/30 shutter speed
+     // when live view is turned on. Record the setting before
+     // starting a focus stack operation, in case it needs to be 
+     // reasserted after turning off LV in preparation for the 
+     // next frame.
+    uint32_t m_shutterSpeed;
+    bool m_assertShutterSpeed;
 public:
     NikType003(USB *usb, PTPStateHandlers *stateHandler);
 	// PTP overrides

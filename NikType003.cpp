@@ -244,6 +244,15 @@ uint16_t NikType003::startFocusStack()
     m_restoreFocusDrive = 0;
     m_stateFlags.m_stackActive = 1;
     m_stateFlags.m_allFramesOK = false;
+    // The D7000 enforces a lower limit of 1/30 shutter speed
+    // when live view is turned on. Record the current setting
+    // in case it needs to be reasserted after turning off LV
+    // NK_DPC_ExposureTime // 0xd100
+    //GetDevicePropValue(NK_DPC_ExposureTime, m_shutterSpeed);
+    //uint16_t num = (0xffff0000 & m_shutterSpeed) >> 16;
+    //uint16_t den = 0xffff & m_shutterSpeed;
+    //m_assertShutterSpeed = (den != 0) ?  (static_cast<float>(num) / static_cast<float>(den)) > (1.0 / 30.0) : false;
+    m_assertShutterSpeed = false;
     ret = captureToCard();
     if(PTP_RC_OK == ret)
     {
@@ -283,9 +292,30 @@ uint16_t NikType003::prepareNextFrame()
 					if((retVal = waitForReady(1000)) == PTP_RC_OK)
 					{
 						g_pRunStack->reportStatus(F("LV off"));
-						retVal = enableLiveView(false);
-						m_stateFlags.m_preparedNextFrame = 1;
-						g_pRunStack->reportFrame(m_remainingFrames);
+						if((retVal = enableLiveView(false)) == PTP_RC_OK)
+                        {
+                            Serial.print("prepareNextFrame expTime: "); Serial.print(m_shutterSpeed, HEX); Serial.print("delay"); Serial.println();
+                            if(m_assertShutterSpeed)
+                            {
+                                g_pRunStack->reportStatus(F("exTime"));
+                                delay(2000); // HACK!
+                                if((retVal = SetDevicePropValue(NK_DPC_ExposureTime, m_shutterSpeed)) == PTP_RC_OK)
+                                {
+                                    g_pRunStack->reportStatus(F("exTime OK"));
+                                    m_stateFlags.m_preparedNextFrame = 1;
+                                    g_pRunStack->reportFrame(m_remainingFrames);
+                                }
+                                else
+                                {
+                                    g_pRunStack->reportStatus(F("ET fail"));
+                                }
+                            }
+                            else
+                            {
+                                m_stateFlags.m_preparedNextFrame = 1;
+                                g_pRunStack->reportFrame(m_remainingFrames);
+                            }                            
+                        }
 					} // check ready after focus
 				} // move focus
 			} // check ready after enable live view
