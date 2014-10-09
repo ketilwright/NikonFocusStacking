@@ -207,6 +207,22 @@ uint16_t NikType003::captureToCard()
     uint16_t ret = PTP_RC_GeneralError;
     if(!m_stateFlags.m_captureInProgress)
     {
+                                        
+        if(m_assertShutterSpeed)
+        {
+            g_pRunStack->reportStatus(F("ET del"));
+            uint32_t etDelay = m_shutterMilliseconds;
+            if(etDelay < 2000) etDelay = 2000;
+            delay(etDelay); // HACK!
+            if((ret = SetDevicePropValue(NK_DPC_ExposureTime, m_shutterSpeed)) != PTP_RC_OK)
+            {
+                g_pRunStack->reportStatus(F("ET fail"));
+                return ret;
+            }
+            
+        }
+        
+
 		g_pRunStack->reportStatus(F("Capture"));
         uint32_t params[2];
         params[0] = 0xffffffff; // Capture Sort = Normal, no AF.
@@ -248,11 +264,23 @@ uint16_t NikType003::startFocusStack()
     // when live view is turned on. Record the current setting
     // in case it needs to be reasserted after turning off LV
     // NK_DPC_ExposureTime // 0xd100
-    //GetDevicePropValue(NK_DPC_ExposureTime, m_shutterSpeed);
-    //uint16_t num = (0xffff0000 & m_shutterSpeed) >> 16;
-    //uint16_t den = 0xffff & m_shutterSpeed;
-    //m_assertShutterSpeed = (den != 0) ?  (static_cast<float>(num) / static_cast<float>(den)) > (1.0 / 30.0) : false;
-    m_assertShutterSpeed = false;
+    if((ret = GetDevicePropValue(NK_DPC_ExposureTime, m_shutterSpeed)) == PTP_RC_OK)
+    {
+        uint16_t num = (0xffff0000 & m_shutterSpeed) >> 16;
+        uint16_t den = 0xffff & m_shutterSpeed;
+        
+        m_shutterMilliseconds = static_cast<double>(num) * 1000.0 / static_cast<double>(den); 
+        
+    //Serial.print("startFocusStack num: "); Serial.print(num); Serial.print(" den: "); Serial.print(den); Serial.println();
+        m_assertShutterSpeed = (den != 0) ?  ((static_cast<float>(num) / static_cast<float>(den)) > (1.0 / 30.0)) : false;    
+    }
+    else
+    {
+        g_pRunStack->reportStatus(F("SP error"));
+        delay(500);
+        return ret;
+    }
+    
     ret = captureToCard();
     if(PTP_RC_OK == ret)
     {
@@ -294,27 +322,8 @@ uint16_t NikType003::prepareNextFrame()
 						g_pRunStack->reportStatus(F("LV off"));
 						if((retVal = enableLiveView(false)) == PTP_RC_OK)
                         {
-                            Serial.print("prepareNextFrame expTime: "); Serial.print(m_shutterSpeed, HEX); Serial.print("delay"); Serial.println();
-                            if(m_assertShutterSpeed)
-                            {
-                                g_pRunStack->reportStatus(F("exTime"));
-                                delay(2000); // HACK!
-                                if((retVal = SetDevicePropValue(NK_DPC_ExposureTime, m_shutterSpeed)) == PTP_RC_OK)
-                                {
-                                    g_pRunStack->reportStatus(F("exTime OK"));
-                                    m_stateFlags.m_preparedNextFrame = 1;
-                                    g_pRunStack->reportFrame(m_remainingFrames);
-                                }
-                                else
-                                {
-                                    g_pRunStack->reportStatus(F("ET fail"));
-                                }
-                            }
-                            else
-                            {
-                                m_stateFlags.m_preparedNextFrame = 1;
-                                g_pRunStack->reportFrame(m_remainingFrames);
-                            }                            
+                            m_stateFlags.m_preparedNextFrame = 1;
+                            g_pRunStack->reportFrame(m_remainingFrames);
                         }
 					} // check ready after focus
 				} // move focus

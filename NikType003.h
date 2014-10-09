@@ -78,6 +78,7 @@ class NikType003 : public PTP, public NKEventHandlers
      // reasserted after turning off LV in preparation for the 
      // next frame.
     uint32_t m_shutterSpeed;
+    double m_shutterMilliseconds;
     bool m_assertShutterSpeed;
 public:
     NikType003(USB *usb, PTPStateHandlers *stateHandler);
