@@ -114,7 +114,10 @@ uint8_t NikType003::Init(uint8_t parent, uint8_t port, bool lowspeed)
 uint8_t NikType003::Poll()
 {
     PTP::Poll();
-    if(isConnected())
+    // The only event we are looking for is PTP_EC_CaptureComplete
+    // Since that can only happen while a capture is in progress,
+    // we only check for it under that condition.
+    if(isConnected() && isCaptureInProgress())
     {
         // Check for camera events if m_nextPollTime milliseconds
         // have elapsed since the previous check.
@@ -154,7 +157,7 @@ void NikType003::OnEvent(const NKEvent* ev)
 		if(0 == m_remainingFrames)
 		{
 			// focusStackNextFrame, which when 0 == m_remainingFrames,
-			// will renable the cursor, and may restore original focus
+			// will re-enable the cursor, and may restore original focus
 			// if requested.
 			focusStackNextFrame();
 		}
@@ -170,10 +173,10 @@ uint16_t NikType003::waitForReady(uint16_t maxAttempts)
     // Nikon docs explicitly say a minimum of 2 attempts on device ready. 
 	// You'd think we could just start with the while loop.
     uint16_t retDevReady = Operation(NK_OC_DeviceReady, 0, NULL);
-    PTPTRACE2("waitForReady1: ", retDevReady);
+    //PTPTRACE2("waitForReady1: ", retDevReady);
     delay(m_checkReadyInternal);
     retDevReady = Operation(NK_OC_DeviceReady, 0, NULL);
-    PTPTRACE2("waitForReady2: ", retDevReady);
+    //PTPTRACE2("waitForReady2: ", retDevReady);
     delay(m_checkReadyInternal);
     while(
             ((PTP_RC_DeviceBusy == retDevReady) || (PTP_RC_GeneralError == retDevReady)) && 
@@ -181,7 +184,7 @@ uint16_t NikType003::waitForReady(uint16_t maxAttempts)
         )
     {
         retDevReady = Operation(NK_OC_DeviceReady, 0, NULL);
-        PTPTRACE2("waitForReadyX: ", retDevReady);
+      //  PTPTRACE2("waitForReadyX: ", retDevReady);
         delay(m_checkReadyInternal);
     }
     return retDevReady;
@@ -208,22 +211,7 @@ uint16_t NikType003::captureToCard()
     if(!m_stateFlags.m_captureInProgress)
     {
                                         
-        if(m_assertShutterSpeed)
-        {
-            g_pRunStack->reportStatus(F("ET del"));
-            uint32_t etDelay = m_shutterMilliseconds;
-            if(etDelay < 2000) etDelay = 2000;
-            delay(etDelay); // HACK!
-            if((ret = SetDevicePropValue(NK_DPC_ExposureTime, m_shutterSpeed)) != PTP_RC_OK)
-            {
-                g_pRunStack->reportStatus(F("ET fail"));
-                return ret;
-            }
-            
-        }
-        
-
-		g_pRunStack->reportStatus(F("Capture"));
+    	g_pRunStack->reportStatus(F("Capture"));
         uint32_t params[2];
         params[0] = 0xffffffff; // Capture Sort = Normal, no AF.
         params[1] = 0;          // Save media = SD card.
@@ -235,6 +223,27 @@ uint16_t NikType003::captureToCard()
 		}
     }
     return ret;
+}
+
+uint16_t NikType003::reAssertShutterSpeed()
+{
+    uint16_t ret = PTP_RC_OK;
+    if(m_assertShutterSpeed)
+    {
+        uint8_t attempts = 100;
+        while(attempts-- > 0)
+        {
+            ret = SetDevicePropValue(NK_DPC_ExposureTime, m_shutterSpeed);
+            if(PTP_RC_OK == ret) break;
+            delay(10);
+        }
+        if(PTP_RC_OK != ret)
+        {
+            g_pRunStack->reportStatus(F("ET fail"));
+            return ret;
+        }
+    }
+    return ret;        
 }
 
 // Drives focus.
@@ -256,7 +265,7 @@ uint16_t NikType003::startFocusStack()
 {
     uint16_t ret = PTP_RC_GeneralError;
     m_remainingFrames = g_pSetup->getNumFrames();
-	g_pRunStack->reportFrame(m_remainingFrames);
+    g_pRunStack->reportFrame(m_remainingFrames);
     m_restoreFocusDrive = 0;
     m_stateFlags.m_stackActive = 1;
     m_stateFlags.m_allFramesOK = false;
@@ -268,10 +277,8 @@ uint16_t NikType003::startFocusStack()
     {
         uint16_t num = (0xffff0000 & m_shutterSpeed) >> 16;
         uint16_t den = 0xffff & m_shutterSpeed;
-        
+        // assume HW never gives us den == 0
         m_shutterMilliseconds = static_cast<double>(num) * 1000.0 / static_cast<double>(den); 
-        
-    //Serial.print("startFocusStack num: "); Serial.print(num); Serial.print(" den: "); Serial.print(den); Serial.println();
         m_assertShutterSpeed = (den != 0) ?  ((static_cast<float>(num) / static_cast<float>(den)) > (1.0 / 30.0)) : false;    
     }
     else
@@ -280,7 +287,6 @@ uint16_t NikType003::startFocusStack()
         delay(500);
         return ret;
     }
-    
     ret = captureToCard();
     if(PTP_RC_OK == ret)
     {
@@ -322,8 +328,11 @@ uint16_t NikType003::prepareNextFrame()
 						g_pRunStack->reportStatus(F("LV off"));
 						if((retVal = enableLiveView(false)) == PTP_RC_OK)
                         {
-                            m_stateFlags.m_preparedNextFrame = 1;
-                            g_pRunStack->reportFrame(m_remainingFrames);
+                            if((retVal = reAssertShutterSpeed()) == PTP_RC_OK)
+                            {
+                                m_stateFlags.m_preparedNextFrame = 1;
+                                g_pRunStack->reportFrame(m_remainingFrames);    
+                            }
                         }
 					} // check ready after focus
 				} // move focus
