@@ -22,11 +22,13 @@
 #pragma once
 
 #include "MessageHandler.h"
+#include "DisplayableParameter.h"
 
 class ManualHandler : public IMessageHandler
 {
 	void advanceCaret(uint8_t dir);
 	void focus(uint8_t dir);
+    DisplayableParameter m_pos;
 public:
 	ManualHandler(MessagePump *_pump);
     MsgResp processMessage(Msg& msg);

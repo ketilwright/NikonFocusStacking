@@ -31,6 +31,7 @@ extern SetupHandler *g_pSetup;
 extern RunFocusStackHandler *g_pRunStack;
 
 
+
 NikType003::NikType003(USB *usb, PTPStateHandlers *stateHandler)
     :
     PTP(usb, stateHandler),
@@ -161,6 +162,14 @@ void NikType003::OnEvent(const NKEvent* ev)
 			// if requested.
 			focusStackNextFrame();
 		}
+        if(m_flagDoingLastFrameLowFstop)
+        {
+            // restore the original aperture
+            //waitForReady(100);
+            //uint16_t retVal = SetDevicePropValue(PTP_DPC_FNumber, m_userFNumber);
+            // TODO: reported success, but the value doesn't stick in the camera
+            // Serial.print("restored m_userFNumber retVal: "); Serial.print(retVal, HEX); Serial.print(" "); Serial.println(m_userFNumber);
+        }
     }
 }
 
@@ -250,6 +259,73 @@ uint16_t NikType003::reAssertShutterSpeed()
 // Parameters:
 //      direction 1: infinity ->close, 2: close -> infinity
 //      amount     : an apparently dimensionless and undocumented quantity.
+
+uint16_t NikType003::moveFocus(uint32_t direction, uint32_t amount)
+{
+    // Serial.print("moveFocus: direction: "); Serial.print(direction); Serial.print(" amount "); Serial.print(amount); Serial.println();
+    uint32_t	params[2];
+    params[0]	= direction;
+    params[1]	= amount;
+    uint16_t retVal = Operation(PTP_OC_NIKON_MfDrive, 2, params);
+    if(PTP_RC_OK == retVal)
+    {
+        //Serial.println("PTP_OC_NIKON_MfDrive success: ");
+        // Nikon docs say "check ready 2 or more times".
+        // Doesn't matter if the camera indicates it's ready
+        // right away :-~
+        delay(m_checkReadyInternal);
+        retVal = Operation(NK_OC_DeviceReady, 0, NULL);
+        switch(retVal)
+        {
+            case NK_RC_MfDriveStepInsufficiency: 
+            {
+                //Serial.println("NK_RC_MfDriveStepInsufficiency1"); 
+                return NK_RC_MfDriveStepInsufficiency;
+            }
+            case NK_RC_MfDriveStepEnd:
+            {
+                //Serial.println("NK_RC_MfDriveStepEnd1");
+                return NK_RC_MfDriveStepEnd;
+            }
+            default:
+            {
+                // proceed
+                break;
+            }
+        }
+        delay(m_checkReadyInternal);
+        retVal = Operation(NK_OC_DeviceReady, 0, NULL);
+        switch(retVal)
+        {
+            case NK_RC_MfDriveStepInsufficiency:
+            {
+                //Serial.println("NK_RC_MfDriveStepInsufficiency2"); 
+                return NK_RC_MfDriveStepInsufficiency;
+            }
+            case NK_RC_MfDriveStepEnd:
+            {
+                //Serial.println("NK_RC_MfDriveStepEnd2");
+                return NK_RC_MfDriveStepEnd;
+            }
+            
+            default:
+            {
+                break;
+            }
+        }
+        
+        while(PTP_RC_DeviceBusy == retVal)
+        {
+            delay(m_checkReadyInternal);
+            retVal = Operation(NK_OC_DeviceReady, 0, NULL);
+        }
+        
+    }
+    return retVal;
+}
+
+
+#if 0
 uint16_t NikType003::moveFocus(uint32_t direction, uint32_t amount)
 {
 	// Serial.print("moveFocus: direction: "); Serial.print(direction); Serial.print(" amount "); Serial.print(amount); Serial.println();
@@ -258,13 +334,17 @@ uint16_t NikType003::moveFocus(uint32_t direction, uint32_t amount)
     params[1]	= amount;
 	return Operation(PTP_OC_NIKON_MfDrive, 2, params);
 }
+#endif
 
 // initiates the 1st frame of focus stack operation,
 // subsequent frames are kicked off by the capture complete event.
 uint16_t NikType003::startFocusStack()
 {
-    uint16_t ret = PTP_RC_GeneralError;
+   // stash the user's current fnumber so that
+   // it can be reasserted on completion
+    uint16_t ret = GetDevicePropValue(PTP_DPC_FNumber, m_userFNumber);
     m_remainingFrames = g_pSetup->getNumFrames();
+    m_flagDoingLastFrameLowFstop = false;
     g_pRunStack->reportFrame(m_remainingFrames);
     m_restoreFocusDrive = 0;
     m_stateFlags.m_stackActive = 1;
@@ -392,15 +472,26 @@ uint16_t NikType003::focusStackNextFrame()
 	}
 	else
 	{
-		// we're done.
-		// restore the cursor, which was off during the run
+		// one final frame with smaller aperture for
+        // more natural DOF in stacked image
+        m_flagDoingLastFrameLowFstop = true;
+        SetDevicePropValue(PTP_DPC_FNumber, g_pSetup->getLastFstop());
+        g_print->print("last frame!");
+        delay(g_pSetup->getFrameDelayMilliseconds());
+        uint32_t params[2];
+        params[0] = 0xffffffff; // Capture Sort = Normal, no AF.
+        params[1] = 0;          // Save media = SD card.
+        Operation(PTP_OC_NIKON_CaptureRecInMedia, 2, params);
+         
 		g_print->cursor();
 		m_stateFlags.m_stackActive = false;
 		if(m_stateFlags.m_allFramesOK)
 		{
 			restoreOriginalFocus();
 		}
+        
 		g_pump.setNextHandler(g_pMain);
+        // 
 	}
 	return retVal;
 }

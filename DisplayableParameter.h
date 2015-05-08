@@ -17,24 +17,26 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-
+#pragma once
 class DisplayableParameter
 {
 	int32_t m_curVal;
 	const int32_t m_minVal, m_maxVal;
 	const uint8_t m_fieldWidth;
+    bool m_padZero;
 	void clamp()
 	{
 		if(m_curVal < m_minVal) m_curVal = m_minVal;
 		if(m_curVal > m_maxVal) m_curVal = m_maxVal;
 	}
 public:
-	DisplayableParameter(int32_t curVal, int32_t minVal, int32_t maxVal, uint8_t fieldWidth)
+	DisplayableParameter(int32_t curVal, int32_t minVal, int32_t maxVal, uint8_t fieldWidth, bool padZero = true)
 		:
 		m_curVal(curVal),
 		m_minVal(minVal),
 		m_maxVal(maxVal),
-		m_fieldWidth(fieldWidth)
+		m_fieldWidth(fieldWidth),
+        m_padZero(padZero)
 	{}
 	void changeVal(int32_t delta)
 	{
@@ -44,20 +46,31 @@ public:
 	
 	void display(uint8_t col, uint8_t row) const
 	{
-		// determine number of digits required
-		uint8_t digits = 0;
-		uint32_t val = m_curVal;
-		while(val > 0)
+        // save cursor, print in the requested location, padding with
+        // zeros, and restore original cursor location.
+        g_print->saveCursorLocation();
+        g_print->setCursor(col, row);
+        
+        // determine number of digits required
+        uint8_t digits = 0;
+        if(m_curVal <= 0)
+        {
+            // need an extra space for -, or 0
+            ++digits;
+        }            
+		uint32_t val = abs(m_curVal);
+        while(val > 0)
 		{
 			val /= 10;
 			++digits;
 		}
-		// save cursor, print in the requested location, padding with
-		// zeros, and restore original cursor location.
-		g_print->saveCursorLocation();
-		g_print->setCursor(col, row);
-		for(uint8_t z = 0; z < m_fieldWidth - digits; z++) g_print->print(F("0"));
-		if(0 != m_curVal) g_print->print(m_curVal);
+        
+		
+		for(uint8_t z = 0; z < m_fieldWidth - digits; z++)
+        {
+             g_print->print(m_padZero ? F("0") : F(" "));
+        }             
+		g_print->print(m_curVal);
 		g_print->restoreCursorLocation();
 	}
 	int32_t getVal() const { return m_curVal; }

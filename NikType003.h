@@ -80,6 +80,14 @@ class NikType003 : public PTP, public NKEventHandlers
     uint32_t m_shutterSpeed;
     double m_shutterMilliseconds;
     bool m_assertShutterSpeed;
+    // Holds the aperture value when
+    // the focus stack starts, so that it 
+    // can be reasserted on completion, in the
+    // case where we shoot one additional frame
+    // at a different fnumber at the end of the
+    // stack
+    uint16_t m_userFNumber;
+    bool m_flagDoingLastFrameLowFstop;
     uint16_t reAssertShutterSpeed();
 public:
     NikType003(USB *usb, PTPStateHandlers *stateHandler);

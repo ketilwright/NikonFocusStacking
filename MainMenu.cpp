@@ -47,7 +47,7 @@ MainMenuHandler::MainMenuHandler(MessagePump *_pump)
 {
     menu[0] = "Setup";
 	menu[1] = "Test";
-    menu[2] = "RunStack";
+    menu[2] = "Run";
 };
 MainMenuHandler::~MainMenuHandler()
 {}
@@ -84,13 +84,19 @@ MsgResp MainMenuHandler::processMessage(Msg& msg)
 				}
 				else if(g_print->getCaretCol() == ModelMenuPosCol && g_print->getCaretRow() == ModelMenuPosRow)
 				{
-					msg.m_nextHandler = g_pManual;
-					rsp = eSuccess;
+                    if(nk3.isConnected())
+                    {
+					    msg.m_nextHandler = g_pManual;
+					    rsp = eSuccess;
+                    }                        
 				}
 				else if(g_print->getCaretCol() == RunMenuPosCol && g_print->getCaretRow() == RunMenuPosRow)
 				{
-					msg.m_nextHandler = g_pRunStack;
-					rsp = eSuccess;
+                    if(nk3.isConnected())
+                    {
+					    msg.m_nextHandler = g_pRunStack;
+					    rsp = eSuccess;
+                    }                        
 				}
                 break;
             }

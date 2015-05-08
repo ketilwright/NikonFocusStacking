@@ -24,6 +24,7 @@ void ShowBuildInfo()
 {
 	char buffer[HeaderMsgSize];
 	GetBuildDate((void*)&buffer,sizeof(buffer));
+    /*
 	Serial.print("Date:");
 	Serial.println((char*)&buffer);
 	Serial.print("Build:");
@@ -31,4 +32,5 @@ void ShowBuildInfo()
 	Serial.print("Free RAM (B):");
 	Serial.println( GetFreeRam());
 	Serial.println();
+    */
 }

@@ -40,7 +40,7 @@ void NikType003StateHandler::OnDeviceDisconnectedState(PTP *ptp)
         stateConnected = stDisconnected;
         NikType003 *nk3 = reinterpret_cast<NikType003*>(ptp);
         nk3->setIsConnected(false);
-		Serial.print("disconnected camera");
+		//Serial.print("disconnected camera");
         g_pump.setNextHandler(g_pMain);
     }
 }
@@ -53,7 +53,7 @@ void NikType003StateHandler::OnDeviceInitializedState(PTP *ptp)
         stateConnected = stConnected;
         NikType003 *nk3 = reinterpret_cast<NikType003*>(ptp);
         nk3->setIsConnected(true);
-		Serial.print("connected camera");
+		//Serial.print("connected camera");
         g_pump.setNextHandler(g_pMain);
     }
 }

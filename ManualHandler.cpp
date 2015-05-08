@@ -32,12 +32,15 @@
 #define AmountFieldEndCol 3
 #define AmountFieldRow 1
 
-#define MarkStartMenuItemCol 5
-#define MarkStartMenuItemRow 0
+// "Pos"
+#define FocusPosMenuItemCol 5
+#define FocusPosMenuItemRow 0
+// current value of m_pos
+#define FocusPosIndicatorCol 9
+#define FocusPosIndicatorRow 0
 
-#define MarkEndMenuItemCol 13
-#define MarkEndMenuItemRow 0
-
+// toggles on/off live view, when
+// lv is on up/down keys move focus
 #define TestMenuItemCol 5
 #define TestMenuItemRow 1
 
@@ -50,18 +53,19 @@ extern NikType003 nk3;
 // default constructor
 ManualHandler::ManualHandler(MessagePump *_pump)
 	:
-	IMessageHandler(_pump)
+	IMessageHandler(_pump),
+    //m_pos(0, -2147483648, 2147483647, 7)
+    m_pos(0, -1000000, 1000000, 7, false) // false -> don't pad zeros
 {
-	menu[0] = "Start";
-	menu[1] = "End";
-	menu[2] = "Amt";
-	menu[3] = "Test";
-	menu[4] = "Done";
+	menu[0] = "Amt";
+    menu[1] = "Pos";
+    menu[2] = "Test";
+    menu[3] = "Done";
 } 
 
 MsgResp ManualHandler::processMessage(Msg& msg)
 {
-	if(eButtonActionPress != msg.m_type) return eFail;
+    if(eButtonActionPress != msg.m_type) return eFail;
 	MsgResp rsp = eSuccess;
 	uint8_t col = g_print->getCaretCol();
 	uint8_t row = g_print->getCaretRow();
@@ -85,6 +89,9 @@ MsgResp ManualHandler::processMessage(Msg& msg)
 			}
 			else if((col <= AmountFieldEndCol) && (AmountFieldRow == row))
 			{
+                // our amt field is in the same screen pos the setup
+                // handler, which already knows how to evaluate the 
+                // msg.
 				rsp = g_pSetup->processMessage(msg);
 			}
 			break;
@@ -97,29 +104,22 @@ MsgResp ManualHandler::processMessage(Msg& msg)
 			}
 			else if((col <= AmountFieldEndCol) && (AmountFieldRow == row))
 			{
+                // our amt field is in the same screen pos the setup
+                // handler, which already knows how to evaluate the
+                // msg.
 				rsp = g_pSetup->processMessage(msg);
 			}
 			break; 
 		}
 		case eSelect:
 		{
-			if((MarkStartMenuItemCol == col) && (MarkStartMenuItemRow == row))
-			{
-				// mark start
-			}
-			else if((MarkEndMenuItemCol == col) && (MarkEndMenuItemRow == row))
-			{
-				// mark end
-			}
-			else if((TestMenuItemCol == col) && (TestMenuItemRow == row))
+			if((TestMenuItemCol == col) && (TestMenuItemRow == row))
 			{
 				if(PTP_RC_OK == nk3.waitForReady(100))
 				{
 					nk3.enableLiveView(!nk3.isLiveViewEnabled());
 				}
-							
 			}
-
 			else if((DoneMenuItemCol == col) && (DoneMenuItemRow == row))
 			{
 				if(nk3.isLiveViewEnabled())
@@ -147,20 +147,10 @@ void ManualHandler::advanceCaret(uint8_t dir)
 	uint8_t row = g_print->getCaretRow();
 	if(0xff == dir) // left
 	{
-		if((MarkStartMenuItemCol == col) && (MarkStartMenuItemRow == row))
+		if((AmountFieldStartCol == col) && (AmountFieldRow == row))
 		{
-			// move from Start -> Done
+			// wrap around backwards from beginning of amount field -> Done menu ite,
 			g_print->setCursor(DoneMenuItemCol, DoneMenuItemRow);
-		}
-		else if((MarkEndMenuItemCol == col) && (MarkEndMenuItemRow == row))
-		{
-			// move from End -> Start
-			g_print->setCursor(MarkStartMenuItemCol, MarkStartMenuItemRow);
-		}
-		else if((AmountFieldStartCol == col) && (AmountFieldRow == row))
-		{
-			// move from beginning of amount field -> End
-			g_print->setCursor(MarkEndMenuItemCol, MarkEndMenuItemRow);
 		}
 		else if((col > AmountFieldStartCol) && (col <= AmountFieldEndCol) && (AmountFieldRow == row))
 		{
@@ -181,17 +171,7 @@ void ManualHandler::advanceCaret(uint8_t dir)
 	}
 	else if(1 == dir) // right
 	{
-		if((MarkStartMenuItemCol == col) && (MarkStartMenuItemRow == row))
-		{
-			// move from mark start -> mark end
-			g_print->setCursor(MarkEndMenuItemCol, MarkEndMenuItemRow);
-		}
-		else if((MarkEndMenuItemCol == col) && (MarkEndMenuItemRow == row))
-		{
-			// move from mark end -> amount field
-			g_print->setCursor(AmountFieldStartCol, AmountFieldRow);
-		}
-		else if((col >= AmountFieldStartCol) && (col < AmountFieldEndCol) && (AmountFieldRow == row))
+		if((col >= AmountFieldStartCol) && (col < AmountFieldEndCol) && (AmountFieldRow == row))
 		{
 			// move within the amount field
 			g_print->setCursor(col + 1, AmountFieldRow);
@@ -203,13 +183,13 @@ void ManualHandler::advanceCaret(uint8_t dir)
 		}
 		else if((TestMenuItemCol == col) && (TestMenuItemRow == row))
 		{
-			// move from test -> donw
+			// move from test -> done
 			g_print->setCursor(DoneMenuItemCol, DoneMenuItemRow);
 		}
 		else if((DoneMenuItemCol == col) && (DoneMenuItemRow == row))
 		{
-			// move from Done -> Mark Start
-			g_print->setCursor(MarkStartMenuItemCol, MarkStartMenuItemRow);
+			// wrap around from Done -> to start of amount field
+			g_print->setCursor(AmountFieldStartCol, AmountFieldRow);
 		}
 	}
 }
@@ -217,24 +197,248 @@ void ManualHandler::advanceCaret(uint8_t dir)
 void ManualHandler::show()
 {
 	g_print->clear();
-	printMenuItem(MarkStartMenuItemCol, MarkStartMenuItemRow, 0);
-	printMenuItem(MarkEndMenuItemCol, MarkEndMenuItemRow, 1);
-	printMenuItem(AmountMenuItemCol, AmountMenuItemRow, 2);
-	printMenuItem(TestMenuItemCol, TestMenuItemRow, 3);
-	printMenuItem(DoneMenuItemCol, DoneMenuItemRow, 4);
+	printMenuItem(AmountMenuItemCol, AmountMenuItemRow, 0);
+    printMenuItem(FocusPosMenuItemCol, FocusPosMenuItemRow,1);
+	printMenuItem(TestMenuItemCol, TestMenuItemRow, 2);
+	printMenuItem(DoneMenuItemCol, DoneMenuItemRow, 3);
+    m_pos.setVal(0);
+    m_pos.display(FocusPosIndicatorCol, FocusPosIndicatorRow);
 	g_pSetup->m_driveAmount.display(AmountFieldStartCol, AmountFieldRow);
-	g_print->setCursor(MarkStartMenuItemCol, MarkStartMenuItemRow);
+	g_print->setCursor(AmountFieldStartCol, AmountFieldRow);
+    nk3.waitForReady(1000);
 }
+void ManualHandler::focus(uint8_t dir)
+{
+    if(nk3.isLiveViewEnabled())
+    {
+        if(PTP_RC_OK == nk3.waitForReady(100))
+        {
+            int32_t amount = static_cast<int32_t>(g_pSetup->getDriveAmount());
+            uint16_t retVal = nk3.moveFocus(dir, amount);
+            switch(retVal)
+            {
+                case PTP_RC_OK:
+                {
+                    switch(dir)
+                    {
+                        case 1:
+                        {
+                            m_pos.changeVal(-amount);
+                            break;
+                        }
+                        case 2:
+                        {
+                            m_pos.changeVal(amount);
+                            break;                            
+                        }
+                    }
+                    
+                    break;
+                }
+                case NK_RC_InvalidStatus:
+                {
+                    m_pos.setVal(0);
+                    m_pos.display(FocusPosIndicatorCol, FocusPosIndicatorRow);
+                    g_print->saveCursorLocation();
+                    g_print->setCursor(FocusPosIndicatorCol, FocusPosIndicatorRow);
+                    g_print->print("chk cam");
+                    g_print->restoreCursorLocation();
+                    delay(1000);
+                    break;
+                }
+                case NK_RC_MfDriveStepEnd:
+                {
+                    // TODO: flag this condition & refuse any further
+                    // focus drive in the same direction.
+                    // Note that a subsequent successful 
+                    // call to nk3.MoveFocus is returning
+                    // NK_RC_MfDriveStepInsufficiency (you can hear
+                    // the focus motor move).
+                    m_pos.setVal(0);
+                    m_pos.display(FocusPosIndicatorCol, FocusPosIndicatorRow);
+                    g_print->saveCursorLocation();
+                    g_print->setCursor(FocusPosIndicatorCol, FocusPosIndicatorRow);
+                    g_print->print("end");
+                    g_print->restoreCursorLocation();
+                    break;
+                }
+                case NK_RC_MfDriveStepInsufficiency:
+                {
+                     m_pos.setVal(0);
+                     m_pos.display(FocusPosIndicatorCol, FocusPosIndicatorRow);
+                     g_print->saveCursorLocation();
+                     g_print->setCursor(FocusPosIndicatorCol, FocusPosIndicatorRow);
+                     g_print->print("isf");
+                     g_print->restoreCursorLocation();
+                    break;
+                }
+                
+            }
+            m_pos.display(FocusPosIndicatorCol, FocusPosIndicatorRow);
+            
+        }            
+    }
+}
+#if 0
+void ManualHandler::focus(uint8_t dir)
+{
+    if(nk3.isLiveViewEnabled())
+    {
+        if(PTP_RC_OK == nk3.waitForReady(100))
+        {
+            int32_t amount = static_cast<int32_t>(g_pSetup->getDriveAmount());
+            if(PTP_RC_OK == nk3.moveFocus(dir, g_pSetup->getDriveAmount()))
+            {
+                //Serial.print("moveFocus: direction: "); 
+                //Serial.print(dir); 
+                //Serial.print(" amount "); 
+                //Serial.println(amount); 
+                //
+                bool proceed = false;
+              //  bool updateDisplay = false;
+                uint16_t devReadyResp = PTP_RC_DeviceBusy;
+                while(!proceed)
+                {
+                    devReadyResp = nk3.Operation(NK_OC_DeviceReady, 0, NULL);
+                    switch(devReadyResp)
+                    {
+                        case PTP_RC_OK:
+                        {
+                            //Serial.println("PTP_RC_OK"); 
+                            proceed = true;
+                //            updateDisplay = true;
+                            break;
+                        }
+                        case NK_RC_MfDriveStepEnd:
+                        {
+                            //Serial.println("NK_RC_MfDriveStepEnd"); 
+                            break;    
+                        }
+                        case PTP_RC_DeviceBusy:
+                        {
+                            //Serial.println("PTP_RC_DeviceBusy"); 
+                            delay(100);
+                            break;
+                        }
+                        case NK_RC_MfDriveStepInsufficiency:
+                        {
+                            //Serial.println("NK_RC_MfDriveStepInsufficiency"); 
+                            if((nk3.enableLiveView(false) == PTP_RC_OK))
+                            {
+                                if((devReadyResp = nk3.waitForReady(1000)) == PTP_RC_OK)
+                                {
+                                    if((devReadyResp = nk3.enableLiveView(true)) == PTP_RC_OK)
+                                    {
+                                        if((devReadyResp = nk3.waitForReady(1000)) == PTP_RC_OK)
+                                        {
+                                            m_pos.setVal(0);
+                                            m_pos.display(FocusPosIndicatorCol, FocusPosIndicatorRow);
+                                            return;
+                                        } //ready
+                                    }  // moveFocus
+                                } // ready
+                            }
+                            proceed = true;
+                            break;
+                        }
+                        
+                        
+                    }
+                }
+                
+                //Serial.println("MFDrive done"); 
+                switch(devReadyResp)
+                {
+                    case PTP_RC_OK:
+                    {
+                        switch(dir)
+                        {
+                            case 1: // backward
+                            {
+                                m_pos.changeVal(-amount);
+                                break;
+                            }
+                            case 2: // forward
+                            {
+                                m_pos.changeVal(amount);
+                                break;
+                            }
+                        }
+                        m_pos.display(FocusPosIndicatorCol, FocusPosIndicatorRow);
+                        break;
+                    }
+                    case NK_RC_MfDriveStepInsufficiency:
+                    {
+                        // Indicates that the driving amount is insufficient
+                        m_pos.setVal(0);
+                        m_pos.display(FocusPosIndicatorCol, FocusPosIndicatorRow);
+                        g_print->saveCursorLocation();
+                        g_print->setCursor(FocusPosIndicatorCol, FocusPosIndicatorRow);
+                        g_print->print("isf");
+                        g_print->restoreCursorLocation();
+                        
+                        
+                        break;
+                    }
+                }
+                //nk3.waitForReady(100);
+            }
+        }
+    }
+}
+
 void ManualHandler::focus(uint8_t dir)
 {
 	if(nk3.isLiveViewEnabled())
 	{
 		if(PTP_RC_OK == nk3.waitForReady(100))
 		{
+            int32_t amount = static_cast<int32_t>(g_pSetup->getDriveAmount());
 			if(PTP_RC_OK == nk3.moveFocus(dir, g_pSetup->getDriveAmount()))
 			{
-				nk3.waitForReady(100);
+                uint16_t retDevReady = nk3.Operation(NK_OC_DeviceReady, 0, NULL);
+                switch(retDevReady)
+                {
+                    case PTP_RC_OK:
+                    {
+                        switch(dir)
+                        {
+                            case 1: // backward
+                            {
+                                m_pos.changeVal(-amount);
+                                break;
+                            }
+                            case 2: // forward
+                            {
+                                m_pos.changeVal(amount);
+                                break;
+                            }
+                        }
+                        m_pos.display(FocusPosIndicatorCol, FocusPosIndicatorRow);
+                        break;
+                    }
+                    case NK_RC_MfDriveStepEnd:
+                    {
+                        // Indicates that the MF driving reaches the termination.
+                        g_print->saveCursorLocation();
+                        g_print->setCursor(FocusPosIndicatorCol, FocusPosIndicatorRow);
+                        g_print->print("end");
+                        g_print->restoreCursorLocation();
+                        break;
+                    }
+                    case NK_RC_MfDriveStepInsufficiency:
+                    {
+                        // Indicates that the driving amount is insufficient
+                        g_print->saveCursorLocation();
+                        g_print->setCursor(FocusPosIndicatorCol, FocusPosIndicatorRow);
+                        g_print->print("insuf");
+                        g_print->restoreCursorLocation();
+                        break;
+                    }
+                }                
+				//nk3.waitForReady(100);
 			}	
 		}
 	}
 }
+#endif
