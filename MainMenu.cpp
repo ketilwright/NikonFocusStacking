@@ -120,6 +120,7 @@ void MainMenuHandler::show()
 	g_print->setCursor(RunMenuPosCol, RunMenuPosRow);
 	g_print->print(menu[2]);
 	g_print->setCursor(0, 0);
+    g_print->cursor();
 }
 
 void MainMenuHandler::advanceCaret(uint8_t dir) // -1 = left, 1 right. All other values ignored

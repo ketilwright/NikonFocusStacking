@@ -78,7 +78,10 @@ class SetupHandler : public IMessageHandler
     void setNumFrames(uint32_t numFrames) { m_numFrames.setVal(numFrames);}
 	uint32_t getFrameDelayMilliseconds() const { return m_frameDelaySeconds.getVal() * 1000; }
 	void setFrameDelaySeconds(uint32_t delay) { m_frameDelaySeconds.setVal(delay); }
-    uint16_t getLastFstop() const 
+    // bookend the stack with a smaller aperture for
+    // more natural looking DOF falloff at the front
+    // and back of the stack
+    uint16_t getBookEndFstop() const 
     {
         uint16_t retVal = 1600;
         if(m_lastFrameFstopInx < maxApertures) 

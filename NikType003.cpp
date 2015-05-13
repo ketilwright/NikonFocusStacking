@@ -162,14 +162,20 @@ void NikType003::OnEvent(const NKEvent* ev)
 			// if requested.
 			focusStackNextFrame();
 		}
-        if(m_flagDoingLastFrameLowFstop)
+        else if(m_stateFlags.m_doingBookEndFrame)
         {
-            // restore the original aperture
-            //waitForReady(100);
-            //uint16_t retVal = SetDevicePropValue(PTP_DPC_FNumber, m_userFNumber);
-            // TODO: reported success, but the value doesn't stick in the camera
-            // Serial.print("restored m_userFNumber retVal: "); Serial.print(retVal, HEX); Serial.print(" "); Serial.println(m_userFNumber);
+            m_stateFlags.m_doingBookEndFrame = false;
+            // we shot a bookend frame at small
+            // aperture, reassert the camera's
+            // fstep to the original value
+            assertFstop(m_origFNumber);
+            if(-1 == m_remainingFrames)
+            {
+                m_stateFlags.m_allFramesOK = 1;
+                g_pump.setNextHandler(g_pMain);
+            }
         }
+        
     }
 }
 
@@ -226,23 +232,51 @@ uint16_t NikType003::captureToCard()
         params[1] = 0;          // Save media = SD card.
 		if((ret = Operation(PTP_OC_NIKON_CaptureRecInMedia, 2, params)) == PTP_RC_OK)
 		{
-			m_stateFlags.m_preparedNextFrame = (m_remainingFrames > 1) ? 0 : 1;
+            if(!m_stateFlags.m_doingBookEndFrame)
+            {
+                // If there are frames remaining to be shot, preparedNextFrame 
+                // so that we the main loop invokes prepareNextFrame the next 
+                // time m_captureInProgress is clear
+			    m_stateFlags.m_preparedNextFrame = (m_remainingFrames > 1) ? 0 : 1;
+            }          
+            // else we're doing small-aperture shot & don't want to 
+            // advance focus between frames. The current camera state
+            // is already OK.
 			m_stateFlags.m_captureInProgress = 1;
 			m_timeLastCapture = millis();	
 		}
     }
     return ret;
 }
-
-uint16_t NikType003::reAssertShutterSpeed()
+uint16_t NikType003::assertFstop(uint16_t aperture)
 {
     uint16_t ret = PTP_RC_OK;
-    if(m_assertShutterSpeed)
+    uint8_t attempts = 100;
+    while(attempts-- > 0)
+    {
+        ret = SetDevicePropValue(PTP_DPC_FNumber, aperture);
+        if(PTP_RC_OK == ret) break;
+        delay(10);
+    }
+    if(PTP_RC_OK != ret)
+    {
+        g_pRunStack->reportStatus(F("Fstop fail"));
+        return ret;
+    }
+    return ret;
+}
+uint16_t NikType003::assertShutterSpeed(uint32_t shutterSpeed)
+{
+    uint16_t ret = PTP_RC_OK;
+    uint16_t expMode = 0;
+    ret = GetDevicePropValue(PTP_DPC_ExposureProgramMode, expMode);
+    //Serial.print("exposure mode: "); Serial.println(expMode);
+    if((ret == PTP_RC_OK) && (expMode == 1))
     {
         uint8_t attempts = 100;
         while(attempts-- > 0)
         {
-            ret = SetDevicePropValue(NK_DPC_ExposureTime, m_shutterSpeed);
+            ret = SetDevicePropValue(NK_DPC_ExposureTime, shutterSpeed);
             if(PTP_RC_OK == ret) break;
             delay(10);
         }
@@ -250,8 +284,8 @@ uint16_t NikType003::reAssertShutterSpeed()
         {
             g_pRunStack->reportStatus(F("ET fail"));
             return ret;
-        }
-    }
+        }    
+    }    
     return ret;        
 }
 
@@ -325,54 +359,41 @@ uint16_t NikType003::moveFocus(uint32_t direction, uint32_t amount)
 }
 
 
-#if 0
-uint16_t NikType003::moveFocus(uint32_t direction, uint32_t amount)
-{
-	// Serial.print("moveFocus: direction: "); Serial.print(direction); Serial.print(" amount "); Serial.print(amount); Serial.println();
-    uint32_t	params[2];
-    params[0]	= direction;
-    params[1]	= amount;
-	return Operation(PTP_OC_NIKON_MfDrive, 2, params);
-}
-#endif
-
 // initiates the 1st frame of focus stack operation,
 // subsequent frames are kicked off by the capture complete event.
 uint16_t NikType003::startFocusStack()
 {
    // stash the user's current fnumber so that
    // it can be reasserted on completion
-    uint16_t ret = GetDevicePropValue(PTP_DPC_FNumber, m_userFNumber);
+    uint16_t ret = GetDevicePropValue(PTP_DPC_FNumber, m_origFNumber);
     m_remainingFrames = g_pSetup->getNumFrames();
-    m_flagDoingLastFrameLowFstop = false;
     g_pRunStack->reportFrame(m_remainingFrames);
     m_restoreFocusDrive = 0;
     m_stateFlags.m_stackActive = 1;
     m_stateFlags.m_allFramesOK = false;
+    // we're in focus & prepared for the first and 2nd frames.
+    // The first is shot at the bookend fstop, focus is Not advanced,
+    // then the 2nd frame is shot, and we proceed with the 
+    // mfdrive -> capture loop.
+    m_stateFlags.m_preparedNextFrame = true; 
     // The D7000 enforces a lower limit of 1/30 shutter speed
     // when live view is turned on. Record the current setting
     // in case it needs to be reasserted after turning off LV
     // NK_DPC_ExposureTime // 0xd100
-    if((ret = GetDevicePropValue(NK_DPC_ExposureTime, m_shutterSpeed)) == PTP_RC_OK)
+    if((ret != GetDevicePropValue(NK_DPC_ExposureTime, m_shutterSpeed)) == PTP_RC_OK)
     {
-        uint16_t num = (0xffff0000 & m_shutterSpeed) >> 16;
-        uint16_t den = 0xffff & m_shutterSpeed;
-        // assume HW never gives us den == 0
-        m_shutterMilliseconds = static_cast<double>(num) * 1000.0 / static_cast<double>(den); 
-        m_assertShutterSpeed = (den != 0) ?  ((static_cast<float>(num) / static_cast<float>(den)) > (1.0 / 30.0)) : false;    
+       g_pRunStack->reportStatus(F("SP error"));
+       delay(500);
+       return ret;
     }
-    else
-    {
-        g_pRunStack->reportStatus(F("SP error"));
-        delay(500);
-        return ret;
-    }
-    ret = captureToCard();
+    
+    
+    // Start by shooting one frame at a smaller aperture
+    // do not advance focus afterward.
+    ret = acquireBookEndFstopFrame();
     if(PTP_RC_OK == ret)
     {
-        g_pRunStack->reportFrame(m_remainingFrames);
-		g_pRunStack->resetLastUpdateTime(m_timeLastCapture);
-		m_remainingFrames--;
+        g_pRunStack->resetLastUpdateTime(m_timeLastCapture);
     }
     else
     {
@@ -408,10 +429,13 @@ uint16_t NikType003::prepareNextFrame()
 						g_pRunStack->reportStatus(F("LV off"));
 						if((retVal = enableLiveView(false)) == PTP_RC_OK)
                         {
-                            if((retVal = reAssertShutterSpeed()) == PTP_RC_OK)
+                            if((retVal = waitForReady(1000)) == PTP_RC_OK)
                             {
-                                m_stateFlags.m_preparedNextFrame = 1;
-                                g_pRunStack->reportFrame(m_remainingFrames);    
+                                if((retVal = assertShutterSpeed(m_shutterSpeed)) == PTP_RC_OK)
+                                {
+                                    m_stateFlags.m_preparedNextFrame = 1;
+                                    g_pRunStack->reportFrame(m_remainingFrames);
+                                }    
                             }
                         }
 					} // check ready after focus
@@ -439,6 +463,7 @@ uint16_t NikType003::prepareNextFrame()
 }
 uint16_t NikType003::focusStackNextFrame()
 {
+    //Serial.print("focusStackNextFrame m_remainingFrames: "); Serial.println(m_remainingFrames);
 	uint16_t retVal = PTP_RC_GeneralError;
 	if(m_remainingFrames > 0)
 	{
@@ -446,11 +471,7 @@ uint16_t NikType003::focusStackNextFrame()
 		{
 			// following frames, if any are kicked off
 			// in the capture complete handling.
-			if(0 == --m_remainingFrames)
-			{
-				m_stateFlags.m_allFramesOK = 1;
-			}
-
+            --m_remainingFrames;
 		} // capture
 		switch(retVal)
 		{
@@ -470,30 +491,46 @@ uint16_t NikType003::focusStackNextFrame()
 			cancelFocusStack();
 		}
 	}
-	else
+	else if(0 == m_remainingFrames)
 	{
+        --m_remainingFrames;
 		// one final frame with smaller aperture for
         // more natural DOF in stacked image
-        m_flagDoingLastFrameLowFstop = true;
-        SetDevicePropValue(PTP_DPC_FNumber, g_pSetup->getLastFstop());
-        g_print->print("last frame!");
-        delay(g_pSetup->getFrameDelayMilliseconds());
-        uint32_t params[2];
-        params[0] = 0xffffffff; // Capture Sort = Normal, no AF.
-        params[1] = 0;          // Save media = SD card.
-        Operation(PTP_OC_NIKON_CaptureRecInMedia, 2, params);
-         
-		g_print->cursor();
+        retVal = acquireBookEndFstopFrame();
 		m_stateFlags.m_stackActive = false;
 		if(m_stateFlags.m_allFramesOK)
 		{
 			restoreOriginalFocus();
 		}
         
-		g_pump.setNextHandler(g_pMain);
+		// g_pump.setNextHandler(g_pMain);
         // 
 	}
+    else if(-1 == m_remainingFrames)
+    {
+        //m_stateFlags.m_allFramesOK = 1;
+        //g_pump.setNextHandler(g_pMain);
+    }        
 	return retVal;
+}
+uint16_t NikType003::acquireBookEndFstopFrame()
+{
+    uint16_t retVal = assertFstop(g_pSetup->getBookEndFstop());
+    if(PTP_RC_OK == retVal)
+    {
+        m_stateFlags.m_doingBookEndFrame = true;
+        retVal = captureToCard();
+        if(PTP_RC_OK == retVal)
+        {
+            g_pRunStack->reportStatus(F("BookEnd"));
+        }
+        else
+        {
+            m_stateFlags.m_doingBookEndFrame = false;
+        }
+    }
+    return retVal;
+    
 }
 
 // Function: cancelFocusStack();
@@ -544,6 +581,7 @@ bool NikType003::isLiveViewEnabled() const { return m_stateFlags.m_lvEnabled; }
 bool NikType003::isCaptureInProgress() const { return m_stateFlags.m_captureInProgress;}
 bool NikType003::isFocusStackActive() const { return m_stateFlags.m_stackActive; }
 bool NikType003::isNextFrameFocused() const { return m_stateFlags.m_preparedNextFrame; }
+bool NikType003::doingBookEndFrame() const { return m_stateFlags.m_doingBookEndFrame; }
 uint16_t NikType003::getProductID() const { return m_idProduct; }
 uint32_t NikType003::getTimeLastCaptureStart() const { return m_timeLastCapture; }
-uint16_t NikType003::getRemainingFrames() const { return m_remainingFrames; }
+//uint16_t NikType003::getRemainingFrames() const { return m_remainingFrames; }

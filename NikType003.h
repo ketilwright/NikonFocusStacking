@@ -36,7 +36,8 @@ struct NikStateFlags
     uint8_t m_stackActive       : 1; // 0: focus stacking inactive  1: focus stack active
     uint8_t m_allFramesOK       : 1; // Cleared when focus stack starts, set when successfully done.
 	uint8_t m_preparedNextFrame : 1; // indicates if focus is ready for next frame.
-    uint8_t m_reserved          : 2; // for the future
+    uint8_t m_doingBookEndFrame : 1; // fire a frame at small aperture without advancing focus
+    uint8_t m_reserved          : 1; // for the future
     NikStateFlags()
         :
         m_connected(0),
@@ -44,7 +45,8 @@ struct NikStateFlags
         m_captureInProgress(0),
         m_stackActive(0),
         m_allFramesOK(0),
-		m_preparedNextFrame(1)
+		m_preparedNextFrame(1),
+        m_doingBookEndFrame(0)
         {}
 };
 
@@ -60,7 +62,7 @@ class NikType003 : public PTP, public NKEventHandlers
     // Contains flags for live view, capture states.
     NikStateFlags m_stateFlags;
     // Count of remaining frames when focus stacking
-    uint16_t m_remainingFrames;
+    int16_t m_remainingFrames;
     // The amount of MFDrive to apply in order to restore
     // the original focus either due to cancel, or due
     // to the stack completing.
@@ -78,17 +80,16 @@ class NikType003 : public PTP, public NKEventHandlers
      // the setting after turning off LV in preparation for the 
      // next frame.
     uint32_t m_shutterSpeed;
-    double m_shutterMilliseconds;
-    bool m_assertShutterSpeed;
     // Holds the aperture value when
     // the focus stack starts, so that it 
     // can be reasserted on completion, in the
     // case where we shoot one additional frame
     // at a different fnumber at the end of the
     // stack
-    uint16_t m_userFNumber;
-    bool m_flagDoingLastFrameLowFstop;
-    uint16_t reAssertShutterSpeed();
+    uint16_t m_origFNumber;
+    uint16_t assertFstop(uint16_t aperture);
+    uint16_t assertShutterSpeed(uint32_t shutterSpeed);
+    uint16_t acquireBookEndFstopFrame();
 public:
     NikType003(USB *usb, PTPStateHandlers *stateHandler);
 	// PTP overrides
@@ -174,6 +175,7 @@ public:
     bool isCaptureInProgress() const;
     bool isFocusStackActive() const;
 	bool isNextFrameFocused() const;
+    bool doingBookEndFrame() const;
     uint16_t getProductID() const;
 	uint32_t getTimeLastCaptureStart() const;
 	uint16_t getRemainingFrames() const;
